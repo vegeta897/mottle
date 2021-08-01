@@ -1,0 +1,18 @@
+{
+	"compilerOptions": {
+		"target": "es6",
+		"module": "esnext",
+		"moduleResolution": "node",
+		"strict": true,
+		"noUnusedLocals": true,
+		"esModuleInterop": true,
+		"sourceMap": true,
+		"forceConsistentCasingInFileNames": true,
+		"strictPropertyInitialization": false,
+		"allowJs": true,
+		"resolveJsonModule": true,
+		"lib": ["dom", "dom.iterable", "esnext"],
+		"baseUrl": "./src",
+	},
+	"include": ["src/**/*"]
+}
