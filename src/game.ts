@@ -1,7 +1,9 @@
 import Stats from 'stats.js'
 import ECS from './ecs'
+import { PixiApp } from './pixi/pixi_app'
 
 export default class Game {
+	pixiApp = new PixiApp()
 	ecs = new ECS()
 	world = this.ecs.world
 	tick = 0
@@ -25,13 +27,13 @@ export default class Game {
 				if (delta > 1000) delta = Game.TickTime
 				lag += delta
 				while (lag >= Game.TickTime) {
-					// this.ecs.update(++this.tick)
+					this.ecs.update(++this.tick)
 					lag -= Game.TickTime
 				}
 			}
 			lastUpdate = now
 			stats.begin()
-			// this.threeApp.render(this.tick, lag / Game.TickTime)
+			this.pixiApp.render(this.tick, lag / Game.TickTime)
 			stats.end()
 		}
 		update()
