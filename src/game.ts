@@ -1,6 +1,9 @@
 import Stats from 'stats.js'
+import ECS from './ecs'
 
 export default class Game {
+	ecs = new ECS()
+	world = this.ecs.world
 	tick = 0
 	static TickRate = 60
 	static TickTime = 1000 / Game.TickRate
