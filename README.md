@@ -1,4 +1,4 @@
-# Mottle
+# 🐾 Mottle
 
 - 🏃‍♀️ Run based
 - ⏱️ Fast paced
