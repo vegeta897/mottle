@@ -30,14 +30,16 @@ export default class Game {
 				lag += delta
 				while (lag >= this.tickTime) {
 					this.tick++
-					this.ecs.update()
+					this.ecs.tickPipeline(this.world)
 					lag -= this.tickTime
 				}
 			}
 			lastUpdate = now
 			stats.begin()
 			this.deltaTime = lag / this.tickTime
-			PixiApp.shared.render(this.world)
+			this.ecs.renderPipeline(this.world)
+			PixiApp.shared.viewport.update(this.tickTime)
+			PixiApp.shared.render()
 			stats.end()
 		}
 		update()
