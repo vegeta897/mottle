@@ -17,6 +17,9 @@ splat.drawRect(0, 0, 8, 8)
 export function addSplat({ x, y }: Vector2) {
 	const grid = Vector2.toString({ x, y })
 	if (!splats.has(grid)) {
-		splats.set(grid, splatContainer.addChild(splat.clone().setTransform(x, y)))
+		splats.set(
+			grid,
+			splatContainer.addChild(splat.clone().setTransform(x - 4, y - 4))
+		)
 	}
 }
