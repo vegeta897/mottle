@@ -11,4 +11,7 @@ export class Vector2 {
 	}
 	x: number
 	y: number
+	static toString({ x, y }: Vector2) {
+		return x + ':' + y
+	}
 }

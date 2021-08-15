@@ -5,6 +5,7 @@ import { MoveTo, Player } from './components'
 import { Graphics } from 'pixi.js'
 import { PixiApp } from './pixi/pixi_app'
 import { DisplayObjects } from './pixi/object_manager'
+import { Vector2 } from './util'
 
 const game = Game.shared
 
@@ -22,13 +23,23 @@ PixiApp.shared.viewport.follow(playerSprite, {
 	radius: 24,
 })
 
-PixiApp.shared.viewport.on('mousedown', (evt) => {
-	const point = PixiApp.shared.viewport.toLocal(evt.data.global)
+function moveTo(globalPoint: Vector2) {
+	const point = PixiApp.shared.viewport.toLocal(globalPoint)
 	if (!hasComponent(game.world, MoveTo, player)) {
 		addComponent(game.world, MoveTo, player)
 	}
 	MoveTo.x[player] = Math.round(point.x)
 	MoveTo.y[player] = Math.round(point.y)
+}
+
+PixiApp.shared.viewport.on('mousemove', ({ data }) => {
+	if (data.buttons & 1) {
+		moveTo(data.global)
+	}
+})
+
+PixiApp.shared.viewport.on('mousedown', ({ data }) => {
+	moveTo(data.global)
 })
 
 game.init()

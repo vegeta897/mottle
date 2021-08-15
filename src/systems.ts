@@ -6,7 +6,7 @@ import {
 } from 'bitecs'
 import { MoveTo, Player } from './components'
 import { Vector2 } from './util'
-import { DisplayObjects } from './pixi/object_manager'
+import { addSplat, DisplayObjects } from './pixi/object_manager'
 
 const playerQuery = defineQuery([Player])
 
@@ -31,6 +31,10 @@ export const playerSystem = defineSystem((world) => {
 				Player.x[eid] += tickMove.x
 				Player.y[eid] += tickMove.y
 			}
+			addSplat({
+				x: Math.round(Player.x[eid] / 8) * 8,
+				y: Math.round(Player.y[eid] / 8) * 8,
+			})
 		}
 		const displayObject = DisplayObjects[eid]
 		displayObject.x = Player.x[eid]
