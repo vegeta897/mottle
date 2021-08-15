@@ -1,14 +1,14 @@
-import { World } from 'uecs'
-import Game from './game'
-import { System } from './systems/system'
-
-// TODO: Switch to bitECS?
+import { createWorld, pipe } from 'bitecs'
 
 export default class ECS {
-	world = new World()
-	systems: System[] = []
-	registerSystems(game: Game) {}
-	update(tick: number) {
-		this.systems.forEach((system) => system.update(tick))
+	world = createWorld()
+	pipeline = pipe()
+
+	constructor() {
+		this.world.time = { delta: 0, elapsed: 0, then: performance.now() }
+	}
+
+	update() {
+		this.pipeline(this.world)
 	}
 }

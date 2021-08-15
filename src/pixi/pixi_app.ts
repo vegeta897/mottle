@@ -1,6 +1,6 @@
-import { System } from '../systems/system'
 import { Application, Container, Ticker, Graphics } from 'pixi.js'
 import { Viewport } from 'pixi-viewport'
+import { IWorld, pipe } from 'bitecs'
 
 export const WIDTH = 960
 export const HEIGHT = 800
@@ -14,7 +14,7 @@ ballGraphic.y = HEIGHT / 2 / DEFAULT_ZOOM
 
 export class PixiApp {
 	private static _shared: PixiApp = new PixiApp()
-	systems: System[] = []
+	pipeline = pipe()
 	application = new Application({
 		width: WIDTH,
 		height: HEIGHT,
@@ -24,6 +24,7 @@ export class PixiApp {
 	stage = this.application.stage
 	viewport: Viewport
 	spriteContainer = new Container()
+
 	constructor() {
 		// Do not use PIXI's ticker
 		Ticker.shared.autoStart = false
@@ -45,10 +46,12 @@ export class PixiApp {
 
 		this.spriteContainer.addChild(ballGraphic)
 	}
-	render(tick: number, dt: number) {
-		this.systems.forEach((system) => system.update(tick, dt))
+
+	render(world: IWorld) {
+		this.pipeline(world)
 		this.application.render()
 	}
+
 	static get shared() {
 		return PixiApp._shared
 	}

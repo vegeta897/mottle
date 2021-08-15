@@ -47,9 +47,9 @@
     "zip-webpack-plugin": "^4.0.1"
   },
   "dependencies": {
+    "bitecs": "^0.3.17",
     "pixi-viewport": "^4.32.0",
     "pixi.js": "^6.0.4",
-    "stats.js": "^0.17.0",
-    "uecs": "^0.4.0"
+    "stats.js": "^0.17.0"
   }
 }

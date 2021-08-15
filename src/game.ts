@@ -9,8 +9,10 @@ export default class Game {
 	tick = 0
 	tickRate = 60
 	tickTime = 1000 / this.tickRate
+	deltaTime = 0
 	paused = false
 	interpolate = true
+
 	async init() {
 		const stats = new Stats()
 		document.body.appendChild(stats.dom)
@@ -27,17 +29,20 @@ export default class Game {
 				if (delta > 1000) delta = this.tickTime
 				lag += delta
 				while (lag >= this.tickTime) {
-					this.ecs.update(++this.tick)
+					this.tick++
+					this.ecs.update()
 					lag -= this.tickTime
 				}
 			}
 			lastUpdate = now
 			stats.begin()
-			PixiApp.shared.render(this.tick, lag / this.tickTime)
+			this.deltaTime = lag / this.tickTime
+			PixiApp.shared.render(this.world)
 			stats.end()
 		}
 		update()
 	}
+
 	static get shared() {
 		return Game._shared
 	}
