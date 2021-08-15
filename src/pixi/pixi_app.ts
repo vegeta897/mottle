@@ -13,6 +13,7 @@ ballGraphic.x = WIDTH / 2 / DEFAULT_ZOOM
 ballGraphic.y = HEIGHT / 2 / DEFAULT_ZOOM
 
 export class PixiApp {
+	private static _shared: PixiApp = new PixiApp()
 	systems: System[] = []
 	application = new Application({
 		width: WIDTH,
@@ -47,5 +48,8 @@ export class PixiApp {
 	render(tick: number, dt: number) {
 		this.systems.forEach((system) => system.update(tick, dt))
 		this.application.render()
+	}
+	static get shared() {
+		return PixiApp._shared
 	}
 }

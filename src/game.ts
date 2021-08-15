@@ -3,12 +3,12 @@ import ECS from './ecs'
 import { PixiApp } from './pixi/pixi_app'
 
 export default class Game {
-	pixiApp = new PixiApp()
+	private static _shared: Game = new Game()
 	ecs = new ECS()
 	world = this.ecs.world
 	tick = 0
-	static TickRate = 60
-	static TickTime = 1000 / Game.TickRate
+	tickRate = 60
+	tickTime = 1000 / this.tickRate
 	paused = false
 	interpolate = true
 	async init() {
@@ -24,18 +24,21 @@ export default class Game {
 			const now = performance.now()
 			if (!this.paused) {
 				let delta = now - lastUpdate
-				if (delta > 1000) delta = Game.TickTime
+				if (delta > 1000) delta = this.tickTime
 				lag += delta
-				while (lag >= Game.TickTime) {
+				while (lag >= this.tickTime) {
 					this.ecs.update(++this.tick)
-					lag -= Game.TickTime
+					lag -= this.tickTime
 				}
 			}
 			lastUpdate = now
 			stats.begin()
-			this.pixiApp.render(this.tick, lag / Game.TickTime)
+			PixiApp.shared.render(this.tick, lag / this.tickTime)
 			stats.end()
 		}
 		update()
+	}
+	static get shared() {
+		return Game._shared
 	}
 }

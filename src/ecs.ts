@@ -2,6 +2,8 @@ import { World } from 'uecs'
 import Game from './game'
 import { System } from './systems/system'
 
+// TODO: Switch to bitECS?
+
 export default class ECS {
 	world = new World()
 	systems: System[] = []
