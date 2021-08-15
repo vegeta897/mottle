@@ -3,18 +3,18 @@ import Game from './game'
 import { addComponent, addEntity, hasComponent } from 'bitecs'
 import { MoveTo, Player } from './components'
 import { Graphics } from 'pixi.js'
-import { DEFAULT_ZOOM, HEIGHT, PixiApp, WIDTH } from './pixi/pixi_app'
+import { PixiApp } from './pixi/pixi_app'
+import { DisplayObjects } from './pixi/object_manager'
 
 const game = Game.shared
 
 const player = addEntity(game.world)
 addComponent(game.world, Player, player)
 
-export const playerSprite = new Graphics()
+const playerSprite = new Graphics()
 playerSprite.beginFill(0xff0000)
 playerSprite.drawCircle(0, 0, 12)
-playerSprite.x = WIDTH / 2 / DEFAULT_ZOOM
-playerSprite.y = HEIGHT / 2 / DEFAULT_ZOOM
+DisplayObjects[player] = playerSprite
 PixiApp.shared.spriteContainer.addChild(playerSprite)
 PixiApp.shared.viewport.follow(playerSprite, {
 	speed: 8,

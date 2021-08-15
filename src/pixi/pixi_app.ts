@@ -1,8 +1,8 @@
 import { Application, Container, Ticker } from 'pixi.js'
 import { Viewport } from 'pixi-viewport'
 
-export const WIDTH = 960
-export const HEIGHT = 800
+export const WIDTH = 840
+export const HEIGHT = 840
 export const DEFAULT_ZOOM = 2
 
 export class PixiApp {

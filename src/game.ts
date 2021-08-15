@@ -20,10 +20,9 @@ export default class Game {
 		// Main loop
 		let lag = 0
 		let lastUpdate = performance.now()
-		const update = () => {
+		const update = (now: number) => {
 			// Adapted from https://gist.github.com/godwhoa/e6225ae99853aac1f633
 			requestAnimationFrame(update)
-			const now = performance.now()
 			if (!this.paused) {
 				let delta = now - lastUpdate
 				if (delta > 1000) delta = this.tickTime
@@ -42,7 +41,7 @@ export default class Game {
 			PixiApp.shared.render()
 			stats.end()
 		}
-		update()
+		requestAnimationFrame(update)
 	}
 
 	static get shared() {

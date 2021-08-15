@@ -5,7 +5,8 @@ import {
 	removeComponent,
 } from 'bitecs'
 import { MoveTo, Player } from './components'
-import { playerSprite } from './index'
+import { Vector2 } from './util'
+import { DisplayObjects } from './pixi/object_manager'
 
 const playerQuery = defineQuery([Player])
 
@@ -18,22 +19,22 @@ export const playerSystem = defineSystem((world) => {
 				x: MoveTo.x[eid] - Player.x[eid],
 				y: MoveTo.y[eid] - Player.y[eid],
 			}
-			const distance = Math.sqrt(delta.x ** 2 + delta.y ** 2)
+			const distance = Vector2.getMagnitude(delta)
 			if (distance < MOVE_SPEED) {
+				// Finished moving
 				Player.x[eid] = MoveTo.x[eid]
 				Player.y[eid] = MoveTo.y[eid]
 				removeComponent(world, MoveTo, eid)
 			} else {
-				const tickMove = {
-					x: (delta.x / distance) * MOVE_SPEED,
-					y: (delta.y / distance) * MOVE_SPEED,
-				}
+				// Move toward point
+				const tickMove = Vector2.normalize(delta, distance, MOVE_SPEED)
 				Player.x[eid] += tickMove.x
 				Player.y[eid] += tickMove.y
 			}
 		}
-		playerSprite.x = Player.x[eid]
-		playerSprite.y = Player.y[eid]
+		const displayObject = DisplayObjects[eid]
+		displayObject.x = Player.x[eid]
+		displayObject.y = Player.y[eid]
 	}
 	return world
 })
