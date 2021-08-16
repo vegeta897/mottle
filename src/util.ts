@@ -15,3 +15,17 @@ export class Vector2 {
 		return x + ':' + y
 	}
 }
+
+// https://easings.net/
+export function easeInCubic(x: number): number {
+	return x * x * x
+}
+export function easeOutCubic(x: number): number {
+	return 1 - Math.pow(1 - x, 3)
+}
+export function easeInSine(x: number): number {
+	return 1 - Math.cos((x * Math.PI) / 2)
+}
+export function easeOutSine(x: number): number {
+	return Math.sin((x * Math.PI) / 2)
+}

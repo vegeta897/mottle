@@ -1,4 +1,5 @@
 import { Application, Container, Ticker } from 'pixi.js'
+import * as PIXI from 'pixi.js'
 import { Viewport } from 'pixi-viewport'
 
 export const WIDTH = 840
@@ -38,6 +39,8 @@ export class PixiApp {
 		this.stage.addChild(this.viewport)
 
 		this.viewport.addChild(this.spriteContainer)
+		// Pixi inspector
+		;(window as any).__PIXI_INSPECTOR_GLOBAL_HOOK__?.register({ PIXI: PIXI })
 	}
 
 	static get shared() {
