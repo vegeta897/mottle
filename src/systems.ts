@@ -6,10 +6,11 @@ import {
 	removeComponent,
 } from 'bitecs'
 import { Drag, Force, Player, Velocity } from './components'
-import { easeOutSine, Vector2 } from './util'
+import { easeOutCubic, easeOutSine, Vector2 } from './util'
 import { addSplat, DisplayObjects } from './pixi/object_manager'
 import InputManager from './input'
 import { PixiApp } from './pixi/pixi_app'
+import { player } from './index'
 
 const { mouse } = InputManager.shared
 
@@ -96,13 +97,47 @@ export const velocitySystem = defineSystem((world) => {
 		Player.x[eid] += Velocity.x[eid]
 		Player.y[eid] += Velocity.y[eid]
 		const displayObject = DisplayObjects[eid]
-		displayObject.x = Player.x[eid]
-		displayObject.y = Player.y[eid]
+		displayObject.x = Math.floor(Player.x[eid])
+		displayObject.y = Math.floor(Player.y[eid])
 		if (Player.painting[eid])
 			addSplat({
-				x: Math.round(Player.x[eid] / 8) * 8,
-				y: Math.round(Player.y[eid] / 8) * 8,
+				x: Math.round(displayObject.x / 8) * 8,
+				y: Math.round(displayObject.y / 8) * 8,
 			})
 	}
+	return world
+})
+
+let viewFollowSpeed = 0
+const FOLLOW_ACCELERATION = 0.15
+const { viewport } = PixiApp.shared
+
+export const cameraSystem = defineSystem((world) => {
+	const velocityMagnitude = Vector2.getMagnitude({
+		x: Velocity.x[player],
+		y: Velocity.y[player],
+	})
+	if (
+		viewFollowSpeed - velocityMagnitude <
+		-viewFollowSpeed * FOLLOW_ACCELERATION
+	) {
+		viewFollowSpeed++
+	} else if (
+		viewFollowSpeed - velocityMagnitude >
+		viewFollowSpeed * FOLLOW_ACCELERATION
+	) {
+		viewFollowSpeed--
+	}
+	const thisFollowSpeed = viewFollowSpeed * FOLLOW_ACCELERATION
+	const playerSprite = DisplayObjects[player]
+	let cameraDistance = Vector2.getMagnitude({
+		x: viewport.center.x - playerSprite.x,
+		y: viewport.center.y - playerSprite.y,
+	})
+	if (cameraDistance < 0.5) cameraDistance = 0
+	const minimumSpeed = easeOutCubic(Math.min(100, cameraDistance) / 100)
+	viewport.follow(playerSprite, {
+		speed: Math.max(minimumSpeed * 5, thisFollowSpeed),
+	})
 	return world
 })

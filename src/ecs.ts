@@ -1,5 +1,6 @@
 import { createWorld, pipe, registerComponents } from 'bitecs'
 import {
+	cameraSystem,
 	dragSystem,
 	forceSystem,
 	inputSystem,
@@ -17,7 +18,7 @@ export default class ECS {
 		dragSystem,
 		velocitySystem
 	)
-	renderPipeline = pipe()
+	renderPipeline = pipe(cameraSystem)
 	constructor() {
 		registerComponents(this.world, [Force])
 	}
