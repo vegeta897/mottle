@@ -16,17 +16,20 @@ const { mouse } = InputManager.shared
 export const inputSystem = defineSystem((world) => {
 	mouse.local = PixiApp.shared.viewport.toLocal(mouse.data.global)
 	mouse.leftButton = !!(mouse.data.buttons & 1)
+	mouse.rightButton = !!(mouse.data.buttons & 2)
 	return world
 })
 
-const MAX_SPEED = 5 // Pixels per tick
-const ACCELERATION = 1.2
+const MAX_SPEED = 3 // Pixels per tick
+const ACCELERATION = 0.8
+const PAINT_FACTOR = 1.5
 
 const playerQuery = defineQuery([Player])
 
 export const playerSystem = defineSystem((world) => {
 	for (let eid of playerQuery(world)) {
-		if (mouse.leftButton && mouse.startedInBounds) {
+		if ((mouse.leftButton || mouse.rightButton) && mouse.startedInBounds) {
+			Player.painting[eid] = mouse.rightButton ? 1 : 0
 			const delta = {
 				x: mouse.local.x - Player.x[eid],
 				y: mouse.local.y - Player.y[eid],
@@ -39,9 +42,14 @@ export const playerSystem = defineSystem((world) => {
 				removeComponent(world, Force, eid)
 				continue
 			}
-			const force = Vector2.normalize(delta, deltaMagnitude, ACCELERATION)
+			const paintFactor = mouse.rightButton ? PAINT_FACTOR : 1
+			const force = Vector2.normalize(
+				delta,
+				deltaMagnitude,
+				ACCELERATION * paintFactor
+			)
 			addComponent(world, Force, eid)
-			Force.maxSpeed[eid] = MAX_SPEED * accelerationFactor
+			Force.maxSpeed[eid] = MAX_SPEED * accelerationFactor * paintFactor
 			Force.x[eid] = force.x
 			Force.y[eid] = force.y
 		} else if (!mouse.leftButton) {
@@ -90,10 +98,11 @@ export const velocitySystem = defineSystem((world) => {
 		const displayObject = DisplayObjects[eid]
 		displayObject.x = Player.x[eid]
 		displayObject.y = Player.y[eid]
-		addSplat({
-			x: Math.round(Player.x[eid] / 8) * 8,
-			y: Math.round(Player.y[eid] / 8) * 8,
-		})
+		if (Player.painting[eid])
+			addSplat({
+				x: Math.round(Player.x[eid] / 8) * 8,
+				y: Math.round(Player.y[eid] / 8) * 8,
+			})
 	}
 	return world
 })

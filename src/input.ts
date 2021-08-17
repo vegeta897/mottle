@@ -8,6 +8,7 @@ export default class InputManager {
 	mouse = {
 		local: { x: 0, y: 0 },
 		leftButton: false,
+		rightButton: false,
 		inBounds: false,
 		startedInBounds: false,
 		data: application.renderer.plugins.interaction.mouse,
@@ -27,20 +28,22 @@ application.renderer.plugins.interaction.on(
 	}
 )
 
-application.renderer.plugins.interaction.on(
-	'mousedown',
-	({ data }: InteractionEvent) => {
-		if (data.buttons & 1) {
-			mouse.startedInBounds = true
-		}
-	}
-)
+function onMouseDown() {
+	mouse.startedInBounds = true
+}
+
+application.renderer.plugins.interaction.on('mousedown', onMouseDown)
+application.renderer.plugins.interaction.on('rightdown', onMouseDown)
 
 function onMouseUp({ data }: InteractionEvent) {
-	if (!(data.buttons & 1)) {
+	if (!(data.buttons & 2)) {
 		mouse.startedInBounds = false
 	}
 }
 
 application.renderer.plugins.interaction.on('mouseup', onMouseUp)
 application.renderer.plugins.interaction.on('mouseupoutside', onMouseUp)
+
+document.oncontextmenu = document.body.oncontextmenu = function (e) {
+	e.preventDefault()
+}
