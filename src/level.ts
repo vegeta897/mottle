@@ -9,6 +9,8 @@ import { PixiApp } from './pixi/pixi_app'
 
 const SECTOR_SIZE = 240
 
+const { spriteContainer, viewport } = PixiApp.shared
+
 type Sector = {
 	things: number[] // Entity IDs
 }
@@ -16,11 +18,6 @@ type Sector = {
 const sectors: Map<string, Sector> = new Map()
 
 const rng = new Prando()
-
-const { spriteContainer, viewport } = PixiApp.shared
-
-viewport.on('moved', onViewportChange)
-viewport.on('zoomed', onViewportChange)
 
 export function onViewportChange() {
 	const [leftSector, rightSector, topSector, bottomSector] = [

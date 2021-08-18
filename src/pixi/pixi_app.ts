@@ -17,6 +17,7 @@ export class PixiApp {
 	render = this.application.render.bind(this.application)
 	stage = this.application.stage
 	viewport: Viewport
+	dirtyView = true
 	spriteContainer = new Container()
 
 	constructor() {
@@ -39,6 +40,10 @@ export class PixiApp {
 		this.stage.addChild(this.viewport)
 
 		this.viewport.addChild(this.spriteContainer)
+
+		this.viewport.on('moved', () => (this.dirtyView = true))
+		this.viewport.on('zoomed', () => (this.dirtyView = true))
+
 		// Pixi inspector
 		;(window as any).__PIXI_INSPECTOR_GLOBAL_HOOK__?.register({ PIXI: PIXI })
 	}

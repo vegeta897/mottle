@@ -11,6 +11,7 @@ import { paintLine, DisplayObjects } from '../pixi/object_manager'
 import InputManager from '../input'
 import { DEFAULT_ZOOM, PixiApp } from '../pixi/pixi_app'
 import { player } from '../'
+import { onViewportChange } from '../level'
 
 const { mouse } = InputManager.shared
 
@@ -114,6 +115,10 @@ const FOLLOW_ACCELERATION = 0.8
 const { viewport } = PixiApp.shared
 
 export const cameraSystem = defineSystem((world) => {
+	if (PixiApp.shared.dirtyView) {
+		onViewportChange()
+		PixiApp.shared.dirtyView = false
+	}
 	const velocityMagnitude = Vector2.getMagnitude({
 		x: Velocity.x[player],
 		y: Velocity.y[player],
