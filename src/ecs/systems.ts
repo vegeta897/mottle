@@ -11,7 +11,7 @@ import { paintLine, DisplayObjects } from '../pixi/object_manager'
 import InputManager from '../input'
 import { DEFAULT_ZOOM, PixiApp } from '../pixi/pixi_app'
 import { player } from '../'
-import { onViewportChange } from '../level'
+import { deleteThing, getThings, onViewportChange } from '../level'
 
 const { mouse } = InputManager.shared
 
@@ -107,6 +107,23 @@ export const velocitySystem = defineSystem((world) => {
 			if (Player.painting[eid]) paintLine(displayObject)
 		}
 	}
+	return world
+})
+
+export const pickupSystem = defineSystem((world) => {
+	// Get list of things from sector(s), check distance of each thing
+	const playerSprite = DisplayObjects[player]
+	getThings(playerSprite).forEach((thing) => {
+		const thingX = Transform.x[thing]
+		const thingY = Transform.y[thing]
+		if (
+			Math.abs(thingX - Transform.x[player]) < 8 + 4 &&
+			Math.abs(thingY - Transform.y[player]) < 8 + 4
+		) {
+			console.log('picked up thing', thing)
+			deleteThing(thing)
+		}
+	})
 	return world
 })
 

@@ -4,6 +4,7 @@ import {
 	dragSystem,
 	forceSystem,
 	inputSystem,
+	pickupSystem,
 	playerSystem,
 	velocitySystem,
 } from './systems'
@@ -16,7 +17,8 @@ export default class ECS {
 		playerSystem,
 		forceSystem,
 		dragSystem,
-		velocitySystem
+		velocitySystem,
+		pickupSystem
 	)
 	renderPipeline = pipe(cameraSystem)
 	constructor() {
