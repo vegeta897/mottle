@@ -5,6 +5,7 @@ import { Drag, Player, Transform, Velocity } from './ecs/components'
 import { Sprite, Texture } from 'pixi.js'
 import { PixiApp } from './pixi/pixi_app'
 import { DisplayObjects } from './pixi/object_manager'
+import { onViewportChange } from './level'
 
 const game = Game.shared
 
@@ -21,9 +22,11 @@ const playerSprite = new Sprite(Texture.WHITE)
 playerSprite.anchor.x = 0.5
 playerSprite.anchor.y = 0.5
 playerSprite.tint = 0xff0000
+playerSprite.alpha = 0.6
 DisplayObjects[player] = playerSprite
 spriteContainer.addChild(playerSprite)
 viewport.moveCenter(playerSprite.x, playerSprite.y)
+onViewportChange()
 
 game.init()
 
