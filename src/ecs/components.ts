@@ -5,7 +5,9 @@ const Vector2 = {
 	y: Types.f32,
 }
 
-export const Player = defineComponent({ ...Vector2, painting: Types.i8 })
+export const Player = defineComponent({ painting: Types.i8 })
+
+export const Transform = defineComponent(Vector2)
 
 export const Velocity = defineComponent(Vector2)
 

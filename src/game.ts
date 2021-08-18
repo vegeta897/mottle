@@ -1,5 +1,5 @@
 import Stats from 'stats.js'
-import ECS from './ecs'
+import ECS from './ecs/ecs'
 import { PixiApp } from './pixi/pixi_app'
 
 export default class Game {

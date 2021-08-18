@@ -1,7 +1,7 @@
 import './style.css'
 import Game from './game'
 import { addComponent, addEntity } from 'bitecs'
-import { Drag, Player, Velocity } from './components'
+import { Drag, Player, Transform, Velocity } from './ecs/components'
 import { Sprite, Texture } from 'pixi.js'
 import { PixiApp } from './pixi/pixi_app'
 import { DisplayObjects } from './pixi/object_manager'
@@ -12,6 +12,7 @@ const { spriteContainer, viewport } = PixiApp.shared
 
 export const player = addEntity(game.world)
 addComponent(game.world, Player, player)
+addComponent(game.world, Transform, player)
 addComponent(game.world, Velocity, player)
 addComponent(game.world, Drag, player)
 Drag.rate[player] = 0.3

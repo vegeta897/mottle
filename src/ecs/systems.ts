@@ -5,12 +5,12 @@ import {
 	Not,
 	removeComponent,
 } from 'bitecs'
-import { Drag, Force, Player, Velocity } from './components'
-import { easeOutCubic, easeOutSine, Vector2 } from './util'
-import { addSplat, DisplayObjects } from './pixi/object_manager'
-import InputManager from './input'
-import { PixiApp } from './pixi/pixi_app'
-import { player } from './index'
+import { Drag, Force, Player, Transform, Velocity } from './components'
+import { clamp, easeInCubic, easeOutCubic, easeOutSine, Vector2 } from '../util'
+import { paintLine, DisplayObjects } from '../pixi/object_manager'
+import InputManager from '../input'
+import { DEFAULT_ZOOM, PixiApp } from '../pixi/pixi_app'
+import { player } from '../'
 
 const { mouse } = InputManager.shared
 
@@ -21,19 +21,20 @@ export const inputSystem = defineSystem((world) => {
 	return world
 })
 
-const MAX_SPEED = 3 // Pixels per tick
+const RUN_SPEED = 3 // Pixels per tick
 const ACCELERATION = 0.8
 const PAINT_FACTOR = 1.5
 
 const playerQuery = defineQuery([Player])
 
+// Maybe ignore deltaMagnitude, just use constant speeds
 export const playerSystem = defineSystem((world) => {
 	for (let eid of playerQuery(world)) {
 		if ((mouse.leftButton || mouse.rightButton) && mouse.startedInBounds) {
 			Player.painting[eid] = mouse.rightButton ? 1 : 0
 			const delta = {
-				x: mouse.local.x - Player.x[eid],
-				y: mouse.local.y - Player.y[eid],
+				x: mouse.local.x - Transform.x[eid],
+				y: mouse.local.y - Transform.y[eid],
 			}
 			const deltaMagnitude = Vector2.getMagnitude(delta)
 			const accelerationFactor = easeOutSine(
@@ -50,10 +51,10 @@ export const playerSystem = defineSystem((world) => {
 				ACCELERATION * paintFactor
 			)
 			addComponent(world, Force, eid)
-			Force.maxSpeed[eid] = MAX_SPEED * accelerationFactor * paintFactor
+			Force.maxSpeed[eid] = RUN_SPEED * accelerationFactor * paintFactor
 			Force.x[eid] = force.x
 			Force.y[eid] = force.y
-		} else if (!mouse.leftButton) {
+		} else {
 			removeComponent(world, Force, eid)
 		}
 	}
@@ -90,26 +91,26 @@ export const dragSystem = defineSystem((world) => {
 	return world
 })
 
-const velocityQuery = defineQuery([Player, Velocity])
+const velocityQuery = defineQuery([Transform, Velocity])
 
 export const velocitySystem = defineSystem((world) => {
 	for (let eid of velocityQuery(world)) {
-		Player.x[eid] += Velocity.x[eid]
-		Player.y[eid] += Velocity.y[eid]
+		Transform.x[eid] += Velocity.x[eid]
+		Transform.y[eid] += Velocity.y[eid]
 		const displayObject = DisplayObjects[eid]
-		displayObject.x = Math.floor(Player.x[eid])
-		displayObject.y = Math.floor(Player.y[eid])
-		if (Player.painting[eid])
-			addSplat({
-				x: Math.round(displayObject.x / 8) * 8,
-				y: Math.round(displayObject.y / 8) * 8,
-			})
+		if (displayObject) {
+			displayObject.x = Math.floor(Transform.x[eid])
+			displayObject.y = Math.floor(Transform.y[eid])
+		}
+		if (Velocity.x[eid] !== 0 || Velocity.y[eid] !== 0) {
+			if (Player.painting[eid]) paintLine(displayObject)
+		}
 	}
 	return world
 })
 
 let viewFollowSpeed = 0
-const FOLLOW_ACCELERATION = 0.15
+const FOLLOW_ACCELERATION = 0.8
 const { viewport } = PixiApp.shared
 
 export const cameraSystem = defineSystem((world) => {
@@ -117,6 +118,16 @@ export const cameraSystem = defineSystem((world) => {
 		x: Velocity.x[player],
 		y: Velocity.y[player],
 	})
+	viewport.setZoom(
+		clamp(
+			DEFAULT_ZOOM -
+				(DEFAULT_ZOOM - 1) *
+					easeInCubic(Math.max(0, velocityMagnitude - RUN_SPEED) / RUN_SPEED),
+			viewport.scaled - 0.005, // Zoom out slowly
+			viewport.scaled + (DEFAULT_ZOOM - viewport.scaled) * 0.05 // Ease zoom back in
+		),
+		true
+	)
 	if (
 		viewFollowSpeed - velocityMagnitude <
 		-viewFollowSpeed * FOLLOW_ACCELERATION
