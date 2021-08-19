@@ -8,7 +8,7 @@ export const DisplayObjects: DisplayObject[] = []
 
 const SPLAT_SIZE = 4
 
-const splatContainer = new Container()
+const splatContainer: Container = new Container()
 PixiApp.shared.viewport.addChildAt(splatContainer, 0)
 
 const splats: Map<string, DisplayObject> = new Map()
@@ -18,24 +18,27 @@ splat.beginFill(0xff88aa)
 splat.drawRect(0, 0, SPLAT_SIZE, SPLAT_SIZE)
 
 let currentLine: Graphics | null = null
+let currentLinePoints = 0
 let lastPoint: Vector2 | null = null
 
 export function paintLine({ x, y }: Vector2) {
-	if (!currentLine) {
+	if (!currentLine || currentLinePoints > 16) {
+		if (!currentLine) lastPoint = { x, y }
 		currentLine = new Graphics()
-		currentLine.lineStyle({
-			width: 8,
-			color: 0xff88aa,
-			cap: PIXI.LINE_CAP.ROUND,
-			join: PIXI.LINE_JOIN.ROUND,
-		})
-		lastPoint = { x, y }
 		splatContainer.addChild(currentLine)
+		currentLinePoints = 0
 	} else if (
 		Vector2.getMagnitude({ x: x - lastPoint!.x, y: y - lastPoint!.y }) > 6
 	) {
 		currentLine.moveTo(lastPoint!.x, lastPoint!.y)
+		currentLine.lineStyle({
+			width: 8, // TODO: This can be modulated!
+			color: 0xff88aa,
+			cap: PIXI.LINE_CAP.ROUND,
+			join: PIXI.LINE_JOIN.ROUND,
+		})
 		currentLine.lineTo(x, y)
+		currentLinePoints++
 		lastPoint = { x, y }
 	}
 }

@@ -15,7 +15,7 @@ export class PixiApp {
 		sharedTicker: true,
 	})
 	render = this.application.render.bind(this.application)
-	stage = this.application.stage
+	stage: Container = this.application.stage
 	viewport: Viewport
 	dirtyView = true
 	spriteContainer = new Container()

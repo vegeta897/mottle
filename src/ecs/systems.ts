@@ -55,6 +55,8 @@ export const playerSystem = defineSystem((world) => {
 	return world
 })
 
+// TODO: Turning while painting regains some momentum, like in roller-blading
+
 const forceQuery = defineQuery([Force, Velocity])
 
 export const forceSystem = defineSystem((world) => {
