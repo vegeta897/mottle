@@ -2,6 +2,8 @@
 
 export class Vector2 {
 	static getMagnitude({ x, y }: Vector2) {
+		if (x === 0) return Math.abs(y)
+		if (y === 0) return Math.abs(x)
 		return Math.sqrt(x ** 2 + y ** 2)
 	}
 	static normalize({ x, y }: Vector2, magnitude?: number, scalar = 1) {

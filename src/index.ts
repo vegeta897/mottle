@@ -17,14 +17,14 @@ addComponent(game.world, Velocity, player)
 addComponent(game.world, Drag, player)
 Drag.rate[player] = 0.3
 
-const playerSprite = new Sprite(Texture.WHITE)
+export const playerSprite = new Sprite(Texture.WHITE)
 playerSprite.anchor.x = 0.5
 playerSprite.anchor.y = 0.5
 playerSprite.tint = 0xff0000
 playerSprite.alpha = 0.6
 DisplayObjects[player] = playerSprite
 spriteContainer.addChild(playerSprite)
-viewport.moveCenter(playerSprite.x, playerSprite.y)
+viewport.follow(playerSprite)
 
 game.init()
 

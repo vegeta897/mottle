@@ -6,11 +6,11 @@ import {
 	removeComponent,
 } from 'bitecs'
 import { Drag, Force, Player, Transform, Velocity } from './components'
-import { clamp, easeInCubic, easeOutCubic, easeOutSine, Vector2 } from '../util'
+import { clamp, easeInCubic, easeOutSine, Vector2 } from '../util'
 import { paintLine, DisplayObjects } from '../pixi/object_manager'
 import InputManager from '../input'
 import { DEFAULT_ZOOM, PixiApp } from '../pixi/pixi_app'
-import { player } from '../'
+import { player, playerSprite } from '../'
 import { deleteThing, getThings, onViewportChange } from '../level'
 
 const { mouse } = InputManager.shared
@@ -111,8 +111,6 @@ export const velocitySystem = defineSystem((world) => {
 })
 
 export const pickupSystem = defineSystem((world) => {
-	// Get list of things from sector(s), check distance of each thing
-	const playerSprite = DisplayObjects[player]
 	getThings(playerSprite).forEach((thing) => {
 		const thingX = Transform.x[thing]
 		const thingY = Transform.y[thing]
@@ -127,8 +125,6 @@ export const pickupSystem = defineSystem((world) => {
 	return world
 })
 
-let viewFollowSpeed = 0
-const FOLLOW_ACCELERATION = 0.8
 const { viewport } = PixiApp.shared
 
 export const cameraSystem = defineSystem((world) => {
@@ -150,27 +146,5 @@ export const cameraSystem = defineSystem((world) => {
 		),
 		true
 	)
-	if (
-		viewFollowSpeed - velocityMagnitude <
-		-viewFollowSpeed * FOLLOW_ACCELERATION
-	) {
-		viewFollowSpeed++
-	} else if (
-		viewFollowSpeed - velocityMagnitude >
-		viewFollowSpeed * FOLLOW_ACCELERATION
-	) {
-		viewFollowSpeed--
-	}
-	const thisFollowSpeed = viewFollowSpeed * FOLLOW_ACCELERATION
-	const playerSprite = DisplayObjects[player]
-	let cameraDistance = Vector2.getMagnitude({
-		x: viewport.center.x - playerSprite.x,
-		y: viewport.center.y - playerSprite.y,
-	})
-	if (cameraDistance < 0.5) cameraDistance = 0
-	const minimumSpeed = easeOutCubic(Math.min(100, cameraDistance) / 100)
-	viewport.follow(playerSprite, {
-		speed: Math.max(minimumSpeed * 5, thisFollowSpeed),
-	})
 	return world
 })
