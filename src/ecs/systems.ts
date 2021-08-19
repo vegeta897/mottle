@@ -6,7 +6,7 @@ import {
 	removeComponent,
 } from 'bitecs'
 import { Drag, Force, Player, Transform, Velocity } from './components'
-import { clamp, easeInCubic, easeOutSine, Vector2 } from '../util'
+import { clamp, easeInCubic, Vector2 } from '../util'
 import { paintLine, DisplayObjects } from '../pixi/object_manager'
 import InputManager from '../input'
 import { DEFAULT_ZOOM, PixiApp } from '../pixi/pixi_app'
@@ -16,7 +16,8 @@ import { deleteThing, getThings, onViewportChange } from '../level'
 const { mouse } = InputManager.shared
 
 export const inputSystem = defineSystem((world) => {
-	mouse.local = PixiApp.shared.viewport.toLocal(mouse.data.global)
+	mouse.global = mouse.data.global
+	mouse.local = PixiApp.shared.viewport.toLocal(mouse.global)
 	mouse.leftButton = !!(mouse.data.buttons & 1)
 	mouse.rightButton = !!(mouse.data.buttons & 2)
 	return world
@@ -26,38 +27,30 @@ const RUN_SPEED = 3 // Pixels per tick
 const ACCELERATION = 0.8
 const PAINT_FACTOR = 1.5
 
-const playerQuery = defineQuery([Player])
-
-// Maybe ignore deltaMagnitude, just use constant speeds
 export const playerSystem = defineSystem((world) => {
-	for (let eid of playerQuery(world)) {
-		if ((mouse.leftButton || mouse.rightButton) && mouse.startedInBounds) {
-			Player.painting[eid] = mouse.rightButton ? 1 : 0
-			const delta = {
-				x: mouse.local.x - Transform.x[eid],
-				y: mouse.local.y - Transform.y[eid],
-			}
-			const deltaMagnitude = Vector2.getMagnitude(delta)
-			const accelerationFactor = easeOutSine(
-				Math.max(0, Math.min(1, (deltaMagnitude - 8) / 64))
-			)
-			if (accelerationFactor === 0) {
-				removeComponent(world, Force, eid)
-				continue
-			}
+	if ((mouse.leftButton || mouse.rightButton) && mouse.startedInBounds) {
+		Player.painting[player] = mouse.rightButton ? 1 : 0
+		const delta = {
+			x: mouse.global.x - viewport.screenWidth / 2,
+			y: mouse.global.y - viewport.screenHeight / 2,
+		}
+		const deltaMagnitude = Vector2.getMagnitude(delta)
+		if (deltaMagnitude < 8 * viewport.scaled) {
+			removeComponent(world, Force, player)
+		} else {
 			const paintFactor = mouse.rightButton ? PAINT_FACTOR : 1
 			const force = Vector2.normalize(
 				delta,
 				deltaMagnitude,
 				ACCELERATION * paintFactor
 			)
-			addComponent(world, Force, eid)
-			Force.maxSpeed[eid] = RUN_SPEED * accelerationFactor * paintFactor
-			Force.x[eid] = force.x
-			Force.y[eid] = force.y
-		} else {
-			removeComponent(world, Force, eid)
+			addComponent(world, Force, player)
+			Force.maxSpeed[player] = RUN_SPEED * paintFactor
+			Force.x[player] = force.x
+			Force.y[player] = force.y
 		}
+	} else {
+		removeComponent(world, Force, player)
 	}
 	return world
 })
