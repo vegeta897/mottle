@@ -45,6 +45,7 @@ export const playerSystem = defineSystem((world) => {
 	if (deltaMagnitude < 8 * viewport.scaled) {
 		removeComponent(world, Force, player)
 	} else {
+		const momentumFactor = clamp(Velocity.speed[player] / 3, 0.3, 1)
 		const paintFactor = mouse.rightButton ? PAINT_FACTOR : 1
 		const force = Vector2.normalize(
 			delta,
@@ -53,8 +54,8 @@ export const playerSystem = defineSystem((world) => {
 		)
 		addComponent(world, Force, player)
 		Force.maxSpeed[player] = RUN_SPEED * paintFactor
-		Force.x[player] = force.x
-		Force.y[player] = force.y
+		Force.x[player] = force.x * momentumFactor
+		Force.y[player] = force.y * momentumFactor
 	}
 	return world
 })
@@ -65,16 +66,19 @@ const forceQuery = defineQuery([Force, Velocity])
 
 export const forceSystem = defineSystem((world) => {
 	for (let eid of forceQuery(world)) {
-		let velocity = {
+		let newVelocity = {
 			x: Velocity.x[eid] + Force.x[eid],
 			y: Velocity.y[eid] + Force.y[eid],
 		}
-		const magnitude = Vector2.getMagnitude(velocity)
-		if (magnitude > Force.maxSpeed[eid]) {
-			velocity = Vector2.multiply(velocity, Force.maxSpeed[eid] / magnitude)
+		const newSpeed = Vector2.getMagnitude(newVelocity)
+		if (newSpeed > Force.maxSpeed[eid]) {
+			newVelocity = Vector2.multiply(
+				newVelocity,
+				Force.maxSpeed[eid] / newSpeed
+			)
 		}
-		Velocity.x[eid] = velocity.x
-		Velocity.y[eid] = velocity.y
+		Velocity.x[eid] = newVelocity.x
+		Velocity.y[eid] = newVelocity.y
 	}
 	return world
 })
@@ -95,6 +99,10 @@ const velocityQuery = defineQuery([Transform, Velocity])
 
 export const velocitySystem = defineSystem((world) => {
 	for (let eid of velocityQuery(world)) {
+		Velocity.speed[eid] = Vector2.getMagnitude({
+			x: Velocity.x[eid],
+			y: Velocity.y[eid],
+		})
 		Transform.x[eid] += Velocity.x[eid]
 		Transform.y[eid] += Velocity.y[eid]
 		const displayObject = DisplayObjects[eid]
@@ -134,15 +142,13 @@ export const cameraSystem = defineSystem((world) => {
 		onViewportChange()
 		PixiApp.shared.dirtyView = false
 	}
-	const velocityMagnitude = Vector2.getMagnitude({
-		x: Velocity.x[player],
-		y: Velocity.y[player],
-	})
 	viewport.setZoom(
 		clamp(
 			DEFAULT_ZOOM -
 				(DEFAULT_ZOOM - 1) *
-					easeInCubic(Math.max(0, velocityMagnitude - RUN_SPEED) / RUN_SPEED),
+					easeInCubic(
+						Math.max(0, Velocity.speed[player] - RUN_SPEED) / RUN_SPEED
+					),
 			viewport.scaled - 0.005, // Zoom out slowly
 			viewport.scaled + (DEFAULT_ZOOM - viewport.scaled) * 0.05 // Ease zoom back in
 		),

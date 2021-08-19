@@ -9,7 +9,7 @@ export const Player = defineComponent({ painting: Types.ui16 })
 
 export const Transform = defineComponent(Vector2)
 
-export const Velocity = defineComponent(Vector2)
+export const Velocity = defineComponent({ ...Vector2, speed: Types.f32 })
 
 export const Force = defineComponent({ ...Vector2, maxSpeed: Types.f32 })
 
