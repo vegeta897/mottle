@@ -18,8 +18,8 @@ const { mouse } = InputManager.shared
 export const inputSystem = defineSystem((world) => {
 	mouse.global = mouse.data.global
 	mouse.local = PixiApp.shared.viewport.toLocal(mouse.global)
-	mouse.leftButton = !!(mouse.data.buttons & 1)
-	mouse.rightButton = !!(mouse.data.buttons & 2)
+	mouse.leftButton = mouse.startedInBounds && !!(mouse.data.buttons & 1)
+	mouse.rightButton = mouse.startedInBounds && !!(mouse.data.buttons & 2)
 	return world
 })
 
@@ -28,29 +28,33 @@ const ACCELERATION = 0.8
 const PAINT_FACTOR = 1.5
 
 export const playerSystem = defineSystem((world) => {
-	if ((mouse.leftButton || mouse.rightButton) && mouse.startedInBounds) {
-		Player.painting[player] = mouse.rightButton ? 1 : 0
-		const delta = {
-			x: mouse.global.x - viewport.screenWidth / 2,
-			y: mouse.global.y - viewport.screenHeight / 2,
-		}
-		const deltaMagnitude = Vector2.getMagnitude(delta)
-		if (deltaMagnitude < 8 * viewport.scaled) {
-			removeComponent(world, Force, player)
-		} else {
-			const paintFactor = mouse.rightButton ? PAINT_FACTOR : 1
-			const force = Vector2.normalize(
-				delta,
-				deltaMagnitude,
-				ACCELERATION * paintFactor
-			)
-			addComponent(world, Force, player)
-			Force.maxSpeed[player] = RUN_SPEED * paintFactor
-			Force.x[player] = force.x
-			Force.y[player] = force.y
-		}
+	if (mouse.rightButton) {
+		Player.painting[player]++
 	} else {
+		Player.painting[player] = 0
+		if (!mouse.leftButton) {
+			removeComponent(world, Force, player)
+			return world
+		}
+	}
+	const delta = {
+		x: mouse.global.x - viewport.screenWidth / 2,
+		y: mouse.global.y - viewport.screenHeight / 2,
+	}
+	const deltaMagnitude = Vector2.getMagnitude(delta)
+	if (deltaMagnitude < 8 * viewport.scaled) {
 		removeComponent(world, Force, player)
+	} else {
+		const paintFactor = mouse.rightButton ? PAINT_FACTOR : 1
+		const force = Vector2.normalize(
+			delta,
+			deltaMagnitude,
+			ACCELERATION * paintFactor
+		)
+		addComponent(world, Force, player)
+		Force.maxSpeed[player] = RUN_SPEED * paintFactor
+		Force.x[player] = force.x
+		Force.y[player] = force.y
 	}
 	return world
 })
@@ -98,9 +102,12 @@ export const velocitySystem = defineSystem((world) => {
 			displayObject.x = Math.floor(Transform.x[eid])
 			displayObject.y = Math.floor(Transform.y[eid])
 		}
-		if (Velocity.x[eid] !== 0 || Velocity.y[eid] !== 0) {
-			if (Player.painting[eid]) paintLine(displayObject)
-		}
+	}
+	if (
+		(Velocity.x[player] !== 0 || Velocity.y[player] !== 0) &&
+		Player.painting[player]
+	) {
+		paintLine(playerSprite, Player.painting[player] === 1)
 	}
 	return world
 })

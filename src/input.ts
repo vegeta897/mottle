@@ -6,10 +6,10 @@ const { viewport, application } = PixiApp.shared
 export default class InputManager {
 	static shared = new InputManager()
 	mouse = {
-		local: { x: 0, y: 0 },
-		global: { x: 0, y: 0 },
-		leftButton: false,
-		rightButton: false,
+		local: { x: 0, y: 0 }, // Updated in inputSystem
+		global: { x: 0, y: 0 }, // Updated in inputSystem
+		leftButton: false, // Updated in inputSystem
+		rightButton: false, // Updated in inputSystem
 		inBounds: false,
 		startedInBounds: false,
 		data: application.renderer.plugins.interaction.mouse,

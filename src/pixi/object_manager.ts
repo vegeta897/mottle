@@ -21,9 +21,9 @@ let currentLine: Graphics | null = null
 let currentLinePoints = 0
 let lastPoint: Vector2 | null = null
 
-export function paintLine({ x, y }: Vector2) {
-	if (!currentLine || currentLinePoints > 16) {
-		if (!currentLine) lastPoint = { x, y }
+export function paintLine({ x, y }: Vector2, newLine: boolean) {
+	if (newLine || currentLinePoints > 16 || !currentLine) {
+		if (newLine || !currentLine) lastPoint = { x, y }
 		currentLine = new Graphics()
 		splatContainer.addChild(currentLine)
 		currentLinePoints = 0
