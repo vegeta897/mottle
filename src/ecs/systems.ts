@@ -10,7 +10,7 @@ import { clamp, easeInCubic, Vector2 } from '../util'
 import { paintLine, DisplayObjects } from '../pixi/object_manager'
 import InputManager from '../input'
 import { DEFAULT_ZOOM, PixiApp } from '../pixi/pixi_app'
-import { player, playerSprite } from '../'
+import { player, playerSprite, updatePlayerColor } from '../'
 import { deleteThing, getThings, onViewportChange } from '../level'
 
 const { mouse } = InputManager.shared
@@ -25,11 +25,21 @@ export const inputSystem = defineSystem((world) => {
 
 const RUN_SPEED = 3 // Pixels per tick
 const ACCELERATION = 0.8
-const PAINT_FACTOR = 1.5
+const PAINT_FACTOR = 1.5 // Speed and acceleration multiplier
 
 export const playerSystem = defineSystem((world) => {
 	if (mouse.rightButton) {
-		Player.painting[player]++
+		if (Player.paint[player] > 0) {
+			if (Player.painting[player] === 0) {
+				// Not already painting
+			} else {
+				Player.painting[player]++
+			}
+			Player.painting[player]++
+			Player.paint[player]--
+			if (Player.paint[player] === 0) Player.painting[player] = 0
+			updatePlayerColor()
+		}
 	} else {
 		Player.painting[player] = 0
 		if (!mouse.leftButton) {
@@ -46,7 +56,8 @@ export const playerSystem = defineSystem((world) => {
 		removeComponent(world, Force, player)
 	} else {
 		const momentumFactor = clamp(Velocity.speed[player] / 3, 0.3, 1)
-		const paintFactor = mouse.rightButton ? PAINT_FACTOR : 1
+		const paintFactor =
+			mouse.rightButton && Player.paint[player] ? PAINT_FACTOR : 1
 		const force = Vector2.normalize(
 			delta,
 			deltaMagnitude,
@@ -113,7 +124,8 @@ export const velocitySystem = defineSystem((world) => {
 	}
 	if (
 		(Velocity.x[player] !== 0 || Velocity.y[player] !== 0) &&
-		Player.painting[player]
+		Player.painting[player] &&
+		Player.paint[player]
 	) {
 		paintLine(playerSprite, Player.painting[player] === 1)
 	}
@@ -128,7 +140,8 @@ export const pickupSystem = defineSystem((world) => {
 			Math.abs(thingX - Transform.x[player]) < 8 + 4 &&
 			Math.abs(thingY - Transform.y[player]) < 8 + 4
 		) {
-			console.log('picked up thing', thing)
+			Player.paint[player] += 50
+			updatePlayerColor()
 			deleteThing(thing)
 		}
 	})

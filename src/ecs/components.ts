@@ -5,7 +5,10 @@ const Vector2 = {
 	y: Types.f32,
 }
 
-export const Player = defineComponent({ painting: Types.ui16 })
+export const Player = defineComponent({
+	painting: Types.ui16,
+	paint: Types.ui16,
+})
 
 export const Transform = defineComponent(Vector2)
 

@@ -12,6 +12,7 @@ const { spriteContainer, viewport } = PixiApp.shared
 
 export const player = addEntity(game.world)
 addComponent(game.world, Player, player)
+Player.paint[player] = 200
 addComponent(game.world, Transform, player)
 addComponent(game.world, Velocity, player)
 addComponent(game.world, Drag, player)
@@ -21,10 +22,16 @@ export const playerSprite = new Sprite(Texture.WHITE)
 playerSprite.anchor.x = 0.5
 playerSprite.anchor.y = 0.5
 playerSprite.tint = 0xff0000
-playerSprite.alpha = 0.6
 DisplayObjects[player] = playerSprite
 spriteContainer.addChild(playerSprite)
 viewport.follow(playerSprite)
+
+export function updatePlayerColor() {
+	const paintRemaining = Math.min(1, Player.paint[player] / 100)
+	const red = 128 + Math.round(paintRemaining * 127)
+	const teal = 128 - Math.round(paintRemaining * 127)
+	playerSprite.tint = (red << 16) + (teal << 8) + teal
+}
 
 game.init()
 
