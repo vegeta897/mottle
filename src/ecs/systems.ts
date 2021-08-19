@@ -127,7 +127,8 @@ export const velocitySystem = defineSystem((world) => {
 		Player.painting[player] &&
 		Player.paint[player]
 	) {
-		paintLine(playerSprite, Player.painting[player] === 1)
+		const paintRemaining = Math.min(1, Player.paint[player] / 100)
+		paintLine(playerSprite, Player.painting[player] === 1, paintRemaining)
 	}
 	return world
 })

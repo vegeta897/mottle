@@ -21,7 +21,11 @@ let currentLine: Graphics | null = null
 let currentLinePoints = 0
 let lastPoint: Vector2 | null = null
 
-export function paintLine({ x, y }: Vector2, newLine: boolean) {
+export function paintLine(
+	{ x, y }: Vector2,
+	newLine: boolean,
+	thickness: number
+) {
 	if (newLine || currentLinePoints > 16 || !currentLine) {
 		if (newLine || !currentLine) lastPoint = { x, y }
 		currentLine = new Graphics()
@@ -32,7 +36,7 @@ export function paintLine({ x, y }: Vector2, newLine: boolean) {
 	) {
 		currentLine.moveTo(lastPoint!.x, lastPoint!.y)
 		currentLine.lineStyle({
-			width: 8, // TODO: This can be modulated!
+			width: 4 + 4 * thickness,
 			color: 0xff88aa,
 			cap: PIXI.LINE_CAP.ROUND,
 			join: PIXI.LINE_JOIN.ROUND,
