@@ -36,7 +36,7 @@ export function onViewportChange() {
 			Transform.x[thing] = thingX
 			Transform.y[thing] = thingY
 			const thingSprite = new Sprite(Texture.WHITE)
-			thingSprite.setTransform(thingX, thingY, 0.5, 0.5)
+			thingSprite.setTransform(thingX, thingY)
 			thingSprite.anchor.x = 0.5
 			thingSprite.anchor.y = 0.5
 			thingSprite.tint = 0x3366aa
@@ -73,7 +73,7 @@ function getSectorsInBox({ left, right, top, bottom }: Box, padding = 0) {
 
 export function getThings({ x, y }: Vector2) {
 	const things: number[] = []
-	getSectorsInBox({ left: x, right: x, top: y, bottom: y }, 8 + 4).forEach(
+	getSectorsInBox({ left: x, right: x, top: y, bottom: y }, 8 + 8).forEach(
 		(sector) => {
 			const sectorGrid = Vector2.toString(sector)
 			if (!sectors.has(sectorGrid)) return

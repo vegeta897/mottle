@@ -138,8 +138,8 @@ export const pickupSystem = defineSystem((world) => {
 		const thingX = Transform.x[thing]
 		const thingY = Transform.y[thing]
 		if (
-			Math.abs(thingX - Transform.x[player]) < 8 + 4 &&
-			Math.abs(thingY - Transform.y[player]) < 8 + 4
+			Math.abs(thingX - Transform.x[player]) < 8 + 8 &&
+			Math.abs(thingY - Transform.y[player]) < 8 + 8
 		) {
 			Player.paint[player] += 50
 			updatePlayerColor()
