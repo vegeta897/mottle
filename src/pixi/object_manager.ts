@@ -36,7 +36,7 @@ export function paintLine(
 	) {
 		currentLine.moveTo(lastPoint!.x, lastPoint!.y)
 		currentLine.lineStyle({
-			width: 4 + 4 * thickness,
+			width: 4 + 8 * thickness,
 			color: 0xff88aa,
 			cap: PIXI.LINE_CAP.ROUND,
 			join: PIXI.LINE_JOIN.ROUND,

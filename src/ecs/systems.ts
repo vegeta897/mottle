@@ -10,7 +10,12 @@ import { clamp, easeInCubic, Vector2 } from '../util'
 import { paintLine, DisplayObjects } from '../pixi/object_manager'
 import InputManager from '../input'
 import { DEFAULT_ZOOM, PixiApp } from '../pixi/pixi_app'
-import { player, playerSprite, updatePlayerColor } from '../'
+import {
+	easedPaintRemaining,
+	player,
+	playerSprite,
+	updatePlayerColor,
+} from '../'
 import { deleteThing, getThings, onViewportChange } from '../level'
 
 const { mouse } = InputManager.shared
@@ -28,6 +33,7 @@ const ACCELERATION = 0.8
 const PAINT_FACTOR = 1.5 // Speed and acceleration multiplier
 
 export const playerSystem = defineSystem((world) => {
+	// TODO: Left/Right buttons aren't mobile-friendly, maybe always paint when moving
 	if (mouse.rightButton) {
 		if (Player.paint[player] > 0) {
 			if (Player.painting[player] === 0) {
@@ -52,7 +58,7 @@ export const playerSystem = defineSystem((world) => {
 		y: mouse.global.y - viewport.screenHeight / 2,
 	}
 	const deltaMagnitude = Vector2.getMagnitude(delta)
-	if (deltaMagnitude < 8 * viewport.scaled) {
+	if (deltaMagnitude < 12 * viewport.scaled) {
 		removeComponent(world, Force, player)
 	} else {
 		const momentumFactor = clamp(Velocity.speed[player] / 3, 0.3, 1)
@@ -127,7 +133,7 @@ export const velocitySystem = defineSystem((world) => {
 		Player.painting[player] &&
 		Player.paint[player]
 	) {
-		const paintRemaining = Math.min(1, Player.paint[player] / 100)
+		const paintRemaining = easedPaintRemaining()
 		paintLine(playerSprite, Player.painting[player] === 1, paintRemaining)
 	}
 	return world
@@ -138,10 +144,10 @@ export const pickupSystem = defineSystem((world) => {
 		const thingX = Transform.x[thing]
 		const thingY = Transform.y[thing]
 		if (
-			Math.abs(thingX - Transform.x[player]) < 8 + 8 &&
-			Math.abs(thingY - Transform.y[player]) < 8 + 8
+			Math.abs(thingX - Transform.x[player]) < 12 + 12 &&
+			Math.abs(thingY - Transform.y[player]) < 12 + 12
 		) {
-			Player.paint[player] += 50
+			Player.paint[player] += 75
 			updatePlayerColor()
 			deleteThing(thing)
 		}

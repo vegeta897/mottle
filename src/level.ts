@@ -27,7 +27,7 @@ export function onViewportChange() {
 		if (sectors.has(sectorGrid)) return
 		const newSector: Sector = { things: [] }
 		sectors.set(sectorGrid, newSector)
-		const thingCount = rng.nextInt(1, 2)
+		const thingCount = rng.nextInt(0, 2)
 		for (let i = 0; i < thingCount; i++) {
 			const thingX = sector.x * SECTOR_SIZE + rng.nextInt(0, SECTOR_SIZE - 1)
 			const thingY = sector.y * SECTOR_SIZE + rng.nextInt(0, SECTOR_SIZE - 1)
@@ -36,7 +36,7 @@ export function onViewportChange() {
 			Transform.x[thing] = thingX
 			Transform.y[thing] = thingY
 			const thingSprite = new Sprite(Texture.WHITE)
-			thingSprite.setTransform(thingX, thingY)
+			thingSprite.setTransform(thingX, thingY, 1.5, 1.5)
 			thingSprite.anchor.x = 0.5
 			thingSprite.anchor.y = 0.5
 			thingSprite.tint = 0x3366aa
@@ -73,7 +73,7 @@ function getSectorsInBox({ left, right, top, bottom }: Box, padding = 0) {
 
 export function getThings({ x, y }: Vector2) {
 	const things: number[] = []
-	getSectorsInBox({ left: x, right: x, top: y, bottom: y }, 8 + 8).forEach(
+	getSectorsInBox({ left: x, right: x, top: y, bottom: y }, 12 + 12).forEach(
 		(sector) => {
 			const sectorGrid = Vector2.toString(sector)
 			if (!sectors.has(sectorGrid)) return

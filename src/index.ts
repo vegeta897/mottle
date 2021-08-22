@@ -5,6 +5,7 @@ import { Drag, Player, Transform, Velocity } from './ecs/components'
 import { Sprite, Texture } from 'pixi.js'
 import { PixiApp } from './pixi/pixi_app'
 import { DisplayObjects } from './pixi/object_manager'
+import { easeInSine } from './util'
 
 const game = Game.shared
 
@@ -21,13 +22,18 @@ Drag.rate[player] = 0.3
 export const playerSprite = new Sprite(Texture.WHITE)
 playerSprite.anchor.x = 0.5
 playerSprite.anchor.y = 0.5
+playerSprite.setTransform(0, 0, 1.5, 1.5)
 playerSprite.tint = 0xff0000
 DisplayObjects[player] = playerSprite
 spriteContainer.addChild(playerSprite)
 viewport.follow(playerSprite)
 
+export function easedPaintRemaining() {
+	return easeInSine(Math.min(1, Player.paint[player] / 150))
+}
+
 export function updatePlayerColor() {
-	const paintRemaining = Math.min(1, Player.paint[player] / 100)
+	const paintRemaining = easedPaintRemaining()
 	const red = 128 + Math.round(paintRemaining * 127)
 	const teal = 128 - Math.round(paintRemaining * 127)
 	playerSprite.tint = (red << 16) + (teal << 8) + teal
