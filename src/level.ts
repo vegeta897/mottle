@@ -1,11 +1,12 @@
 import { Vector2 } from './util'
 import Prando from 'prando'
-import { addComponent, addEntity } from 'bitecs'
+import { addComponent, addEntity, removeComponent } from 'bitecs'
 import Game from './game'
 import {
 	AreaConstraint,
 	DisplayObject,
 	Drag,
+	Force,
 	PaintBucket,
 	Transform,
 	Velocity,
@@ -34,16 +35,19 @@ const thingToSector: Sector[] = []
 const rng = new Prando()
 
 export enum PaintBucketStates {
-	SLEEP = 0,
-	IDLE = 1,
-	WALK = 2,
+	SLEEP,
+	IDLE,
+	WALK,
+	SPILL,
 }
 
-const paintBuckets: number[] = []
+export const paintBuckets: number[] = []
 
 export function createLevel() {
 	for (let i = 0; i < 8; i++) {
-		const bucketX = Math.floor(i * SECTOR_SIZE + rng.next() * SECTOR_SIZE)
+		const bucketX = Math.floor(
+			SECTOR_SIZE / 8 + i * SECTOR_SIZE + rng.next() * SECTOR_SIZE
+		)
 		const bucketY = Math.floor(SECTOR_SIZE / 4 + (rng.next() * SECTOR_SIZE) / 2)
 		const bucket = addEntity(Game.shared.world)
 		paintBuckets.push(bucket)
@@ -51,11 +55,11 @@ export function createLevel() {
 		Transform.x[bucket] = bucketX
 		Transform.y[bucket] = bucketY
 		Transform.width[bucket] = 24
-		Transform.height[bucket] = 32
+		Transform.height[bucket] = 24
 		const bucketSprite = new Sprite(Texture.WHITE)
 		bucketSprite.setTransform(bucketX, bucketY, 1.5, 2)
 		bucketSprite.anchor.x = 0.5
-		bucketSprite.anchor.y = 0.5
+		bucketSprite.anchor.y = 0.75
 		bucketSprite.tint = 0x3399ee
 		DisplayObjects[bucket] = bucketSprite
 		spriteContainer.addChild(bucketSprite)
@@ -69,6 +73,19 @@ export function createLevel() {
 		AreaConstraint.bottom[bucket] = 408
 		AreaConstraint.right[bucket] = 4080
 	}
+}
+
+export function spillBucket(
+	bucket: number,
+	velocityX: number,
+	velocityY: number
+) {
+	PaintBucket.state[bucket] = PaintBucketStates.SPILL
+	removeComponent(Game.shared.world, Force, bucket)
+	Velocity.x[bucket] = velocityX * 2
+	Velocity.y[bucket] = velocityY * 2
+	Drag.rate[bucket] = 0.1
+	DisplayObjects[bucket].rotation = Math.PI / 2
 }
 
 export function onViewportChange() {

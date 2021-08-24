@@ -22,10 +22,10 @@ import InputManager from '../input'
 import { PixiApp } from '../pixi/pixi_app'
 import { player, playerSprite, updatePlayerColor } from '../'
 import {
-	deleteThing,
-	getThings,
 	onViewportChange,
+	paintBuckets,
 	PaintBucketStates,
+	spillBucket,
 } from '../level'
 
 const { mouse } = InputManager.shared
@@ -186,15 +186,16 @@ export const areaConstraintSystem = defineSystem((world) => {
 })
 
 export const pickupSystem = defineSystem((world) => {
-	getThings({ x: Transform.x[player], y: Transform.y[player] }).forEach(
-		(thing) => {
-			if (transformsCollide(player, thing)) {
-				Player.paint[player] += 75
-				updatePlayerColor()
-				deleteThing(thing)
-			}
+	paintBuckets.forEach((bucket) => {
+		if (
+			PaintBucket.state[bucket] !== PaintBucketStates.SPILL &&
+			transformsCollide(player, bucket)
+		) {
+			Player.paint[player] += 75
+			updatePlayerColor()
+			spillBucket(bucket, Velocity.x[player], Velocity.y[player])
 		}
-	)
+	})
 	return world
 })
 

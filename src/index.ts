@@ -25,7 +25,7 @@ Player.paint[player] = 200
 addComponent(game.world, Transform, player)
 Transform.y[player] = viewport.worldScreenHeight / 2
 Transform.width[player] = 24
-Transform.height[player] = 32
+Transform.height[player] = 24
 addComponent(game.world, Velocity, player)
 addComponent(game.world, Drag, player)
 Drag.rate[player] = 0.3
@@ -36,7 +36,7 @@ addComponent(game.world, DisplayObject, player)
 
 export const playerSprite = new Sprite(Texture.WHITE)
 playerSprite.anchor.x = 0.5
-playerSprite.anchor.y = 0.5
+playerSprite.anchor.y = 0.75
 playerSprite.setTransform(0, 0, 1.5, 2)
 playerSprite.tint = 0xff0000
 DisplayObjects[player] = playerSprite
