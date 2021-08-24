@@ -13,6 +13,7 @@ import { Sprite, Texture } from 'pixi.js'
 import { PixiApp } from './pixi/pixi_app'
 import { DisplayObjects } from './pixi/object_manager'
 import { easeInSine } from './util'
+import { createLevel } from './level'
 
 const game = Game.shared
 
@@ -24,7 +25,7 @@ Player.paint[player] = 200
 addComponent(game.world, Transform, player)
 Transform.y[player] = viewport.worldScreenHeight / 2
 Transform.width[player] = 24
-Transform.height[player] = 24
+Transform.height[player] = 32
 addComponent(game.world, Velocity, player)
 addComponent(game.world, Drag, player)
 Drag.rate[player] = 0.3
@@ -36,7 +37,7 @@ addComponent(game.world, DisplayObject, player)
 export const playerSprite = new Sprite(Texture.WHITE)
 playerSprite.anchor.x = 0.5
 playerSprite.anchor.y = 0.5
-playerSprite.setTransform(0, 0, 1.5, 1.5)
+playerSprite.setTransform(0, 0, 1.5, 2)
 playerSprite.tint = 0xff0000
 DisplayObjects[player] = playerSprite
 spriteContainer.addChild(playerSprite)
@@ -52,6 +53,6 @@ export function updatePlayerColor() {
 	playerSprite.tint = (red << 16) + (teal << 8) + teal
 }
 
-game.init()
+game.init().then(createLevel)
 
 // TODO: Try Vite?

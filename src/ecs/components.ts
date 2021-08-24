@@ -30,3 +30,8 @@ export const AreaConstraint = defineComponent({
 })
 
 export const DisplayObject = defineComponent()
+
+export const PaintBucket = defineComponent({
+	state: Types.ui8,
+	stateTime: Types.ui32,
+})

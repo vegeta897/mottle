@@ -1,5 +1,6 @@
 import {
 	addComponent,
+	Changed,
 	defineQuery,
 	defineSystem,
 	Not,
@@ -10,6 +11,7 @@ import {
 	DisplayObject,
 	Drag,
 	Force,
+	PaintBucket,
 	Player,
 	Transform,
 	Velocity,
@@ -19,7 +21,12 @@ import { DisplayObjects } from '../pixi/object_manager'
 import InputManager from '../input'
 import { PixiApp } from '../pixi/pixi_app'
 import { player, playerSprite, updatePlayerColor } from '../'
-import { deleteThing, getThings, onViewportChange } from '../level'
+import {
+	deleteThing,
+	getThings,
+	onViewportChange,
+	PaintBucketStates,
+} from '../level'
 
 const { mouse } = InputManager.shared
 
@@ -74,6 +81,34 @@ export const playerSystem = defineSystem((world) => {
 	return world
 })
 
+const paintBucketQuery = defineQuery([PaintBucket])
+
+export const paintBucketSystem = defineSystem((world) => {
+	for (let eid of paintBucketQuery(world)) {
+		if (PaintBucket.state[eid] === PaintBucketStates.SLEEP) continue
+		if (
+			PaintBucket.state[eid] === PaintBucketStates.IDLE &&
+			PaintBucket.stateTime[eid] === 60
+		) {
+			PaintBucket.state[eid] = PaintBucketStates.WALK
+			PaintBucket.stateTime[eid] = 0
+			addComponent(world, Force, eid)
+			Force.maxSpeed[eid] = 0.7
+			Force.x[eid] = (Math.random() > 0.5 ? 1 : -1) * 0.1
+			Force.y[eid] = (Math.random() > 0.5 ? 1 : -1) * 0.1
+		} else if (
+			PaintBucket.state[eid] === PaintBucketStates.WALK &&
+			PaintBucket.stateTime[eid] === 100
+		) {
+			PaintBucket.state[eid] = PaintBucketStates.IDLE
+			PaintBucket.stateTime[eid] = 0
+			removeComponent(world, Force, eid)
+		}
+		PaintBucket.stateTime[eid]++
+	}
+	return world
+})
+
 // TODO: Turning while painting regains some momentum, like in roller-blading
 
 const forceQuery = defineQuery([Force, Velocity])
@@ -101,6 +136,7 @@ const dragQuery = defineQuery([Drag, Velocity, Not(Force)])
 
 export const dragSystem = defineSystem((world) => {
 	for (let eid of dragQuery(world)) {
+		if (Velocity.x[eid] === 0 && Velocity.y[eid] === 0) continue
 		Velocity.x[eid] *= 1 - Drag.rate[eid]
 		Velocity.y[eid] *= 1 - Drag.rate[eid]
 		if (Math.abs(Velocity.x[eid]) < 0.1) Velocity.x[eid] = 0
@@ -131,7 +167,7 @@ export const velocitySystem = defineSystem((world) => {
 	return world
 })
 
-const areaConstraintQuery = defineQuery([Transform, AreaConstraint])
+const areaConstraintQuery = defineQuery([Changed(Transform), AreaConstraint])
 
 export const areaConstraintSystem = defineSystem((world) => {
 	for (let eid of areaConstraintQuery(world)) {
@@ -162,7 +198,7 @@ export const pickupSystem = defineSystem((world) => {
 	return world
 })
 
-const spriteQuery = defineQuery([Transform, DisplayObject])
+const spriteQuery = defineQuery([Changed(Transform), DisplayObject])
 
 export const spriteSystem = defineSystem((world) => {
 	for (let eid of spriteQuery(world)) {
