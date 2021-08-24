@@ -6,8 +6,14 @@ import { Transform } from './ecs/components'
 import { Sprite, Texture } from 'pixi.js'
 import { DisplayObjects } from './pixi/object_manager'
 import { PixiApp } from './pixi/pixi_app'
+import { Map2D } from './map'
 
-const SECTOR_SIZE = 240
+// TODO: We probably don't need sectors anymore
+
+const SECTOR_SIZE = 432
+
+const paintMap = new Map2D(1000, 102)
+console.log(paintMap)
 
 const { spriteContainer, viewport } = PixiApp.shared
 
@@ -27,7 +33,7 @@ export function onViewportChange() {
 		if (sectors.has(sectorGrid)) return
 		const newSector: Sector = { things: [] }
 		sectors.set(sectorGrid, newSector)
-		const thingCount = rng.nextInt(0, 2)
+		const thingCount = 1
 		for (let i = 0; i < thingCount; i++) {
 			const thingX = sector.x * SECTOR_SIZE + rng.nextInt(0, SECTOR_SIZE - 1)
 			const thingY = sector.y * SECTOR_SIZE + rng.nextInt(0, SECTOR_SIZE - 1)
@@ -35,6 +41,8 @@ export function onViewportChange() {
 			addComponent(Game.shared.world, Transform, thing)
 			Transform.x[thing] = thingX
 			Transform.y[thing] = thingY
+			Transform.width[thing] = 24
+			Transform.height[thing] = 24
 			const thingSprite = new Sprite(Texture.WHITE)
 			thingSprite.setTransform(thingX, thingY, 1.5, 1.5)
 			thingSprite.anchor.x = 0.5

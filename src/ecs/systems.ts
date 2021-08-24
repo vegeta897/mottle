@@ -5,17 +5,20 @@ import {
 	Not,
 	removeComponent,
 } from 'bitecs'
-import { Drag, Force, Player, Transform, Velocity } from './components'
-import { clamp, easeInCubic, Vector2 } from '../util'
-import { paintLine, DisplayObjects } from '../pixi/object_manager'
-import InputManager from '../input'
-import { DEFAULT_ZOOM, PixiApp } from '../pixi/pixi_app'
 import {
-	easedPaintRemaining,
-	player,
-	playerSprite,
-	updatePlayerColor,
-} from '../'
+	AreaConstraint,
+	DisplayObject,
+	Drag,
+	Force,
+	Player,
+	Transform,
+	Velocity,
+} from './components'
+import { clamp, transformsCollide, Vector2 } from '../util'
+import { DisplayObjects } from '../pixi/object_manager'
+import InputManager from '../input'
+import { PixiApp } from '../pixi/pixi_app'
+import { player, playerSprite, updatePlayerColor } from '../'
 import { deleteThing, getThings, onViewportChange } from '../level'
 
 const { mouse } = InputManager.shared
@@ -33,37 +36,31 @@ const ACCELERATION = 0.8
 const PAINT_FACTOR = 1.5 // Speed and acceleration multiplier
 
 export const playerSystem = defineSystem((world) => {
-	// TODO: Left/Right buttons aren't mobile-friendly, maybe always paint when moving
-	if (mouse.rightButton) {
-		if (Player.paint[player] > 0) {
-			if (Player.painting[player] === 0) {
-				// Not already painting
-			} else {
-				Player.painting[player]++
-			}
+	if (!mouse.leftButton) {
+		removeComponent(world, Force, player)
+		return world
+	}
+	if (Player.paint[player] > 0) {
+		if (Player.painting[player] === 0) {
+			// Not already painting
+		} else {
 			Player.painting[player]++
-			Player.paint[player]--
-			if (Player.paint[player] === 0) Player.painting[player] = 0
-			updatePlayerColor()
 		}
-	} else {
-		Player.painting[player] = 0
-		if (!mouse.leftButton) {
-			removeComponent(world, Force, player)
-			return world
-		}
+		Player.painting[player]++
+		Player.paint[player]--
+		if (Player.paint[player] === 0) Player.painting[player] = 0
+		updatePlayerColor()
 	}
 	const delta = {
-		x: mouse.global.x - viewport.screenWidth / 2,
-		y: mouse.global.y - viewport.screenHeight / 2,
+		x: mouse.local.x - Transform.x[player],
+		y: mouse.local.y - Transform.y[player],
 	}
 	const deltaMagnitude = Vector2.getMagnitude(delta)
 	if (deltaMagnitude < 12 * viewport.scaled) {
 		removeComponent(world, Force, player)
 	} else {
 		const momentumFactor = clamp(Velocity.speed[player] / 3, 0.3, 1)
-		const paintFactor =
-			mouse.rightButton && Player.paint[player] ? PAINT_FACTOR : 1
+		const paintFactor = Player.paint[player] ? PAINT_FACTOR : 1
 		const force = Vector2.normalize(
 			delta,
 			deltaMagnitude,
@@ -122,57 +119,63 @@ export const velocitySystem = defineSystem((world) => {
 		})
 		Transform.x[eid] += Velocity.x[eid]
 		Transform.y[eid] += Velocity.y[eid]
-		const displayObject = DisplayObjects[eid]
-		if (displayObject) {
-			displayObject.x = Math.floor(Transform.x[eid])
-			displayObject.y = Math.floor(Transform.y[eid])
-		}
 	}
-	if (
-		(Velocity.x[player] !== 0 || Velocity.y[player] !== 0) &&
-		Player.painting[player] &&
-		Player.paint[player]
-	) {
-		const paintRemaining = easedPaintRemaining()
-		paintLine(playerSprite, Player.painting[player] === 1, paintRemaining)
+	// if (
+	// 	(Velocity.x[player] !== 0 || Velocity.y[player] !== 0) &&
+	// 	Player.painting[player] &&
+	// 	Player.paint[player]
+	// ) {
+	// 	const paintRemaining = easedPaintRemaining()
+	// 	paintLine(playerSprite, Player.painting[player] === 1, paintRemaining)
+	// }
+	return world
+})
+
+const areaConstraintQuery = defineQuery([Transform, AreaConstraint])
+
+export const areaConstraintSystem = defineSystem((world) => {
+	for (let eid of areaConstraintQuery(world)) {
+		Transform.x[eid] = clamp(
+			Transform.x[eid],
+			AreaConstraint.left[eid] + Transform.width[eid] / 2,
+			AreaConstraint.right[eid] - Transform.width[eid] / 2
+		)
+		Transform.y[eid] = clamp(
+			Transform.y[eid],
+			AreaConstraint.top[eid] + Transform.height[eid] / 2,
+			AreaConstraint.bottom[eid] - Transform.height[eid] / 2
+		)
 	}
 	return world
 })
 
 export const pickupSystem = defineSystem((world) => {
-	getThings(playerSprite).forEach((thing) => {
-		const thingX = Transform.x[thing]
-		const thingY = Transform.y[thing]
-		if (
-			Math.abs(thingX - Transform.x[player]) < 12 + 12 &&
-			Math.abs(thingY - Transform.y[player]) < 12 + 12
-		) {
-			Player.paint[player] += 75
-			updatePlayerColor()
-			deleteThing(thing)
+	getThings({ x: Transform.x[player], y: Transform.y[player] }).forEach(
+		(thing) => {
+			if (transformsCollide(player, thing)) {
+				Player.paint[player] += 75
+				updatePlayerColor()
+				deleteThing(thing)
+			}
 		}
-	})
+	)
+	return world
+})
+
+const spriteQuery = defineQuery([Transform, DisplayObject])
+
+export const spriteSystem = defineSystem((world) => {
+	for (let eid of spriteQuery(world)) {
+		DisplayObjects[eid].x = Math.floor(Transform.x[eid])
+		DisplayObjects[eid].y = Math.floor(Transform.y[eid])
+	}
 	return world
 })
 
 const { viewport } = PixiApp.shared
 
 export const cameraSystem = defineSystem((world) => {
-	if (PixiApp.shared.dirtyView) {
-		onViewportChange()
-		PixiApp.shared.dirtyView = false
-	}
-	viewport.setZoom(
-		clamp(
-			DEFAULT_ZOOM -
-				(DEFAULT_ZOOM - 1) *
-					easeInCubic(
-						Math.max(0, Velocity.speed[player] - RUN_SPEED) / RUN_SPEED
-					),
-			viewport.scaled - 0.005, // Zoom out slowly
-			viewport.scaled + (DEFAULT_ZOOM - viewport.scaled) * 0.05 // Ease zoom back in
-		),
-		true
-	)
+	onViewportChange()
+	viewport.moveCenter(playerSprite.x + 192, viewport.worldScreenHeight / 2 - 12)
 	return world
 })

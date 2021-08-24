@@ -2,7 +2,7 @@ import { Application, Container, Ticker } from 'pixi.js'
 import * as PIXI from 'pixi.js'
 import { Viewport } from 'pixi-viewport'
 
-export const WIDTH = 864
+export const WIDTH = 1200
 export const HEIGHT = 864
 export const DEFAULT_ZOOM = 2
 
@@ -14,10 +14,9 @@ export class PixiApp {
 		backgroundColor: 0xf7ffeb,
 		sharedTicker: true,
 	})
-	render = this.application.render.bind(this.application)
+	render = () => this.application.render()
 	stage: Container = this.application.stage
 	viewport: Viewport
-	dirtyView = true
 	spriteContainer = new Container()
 
 	constructor() {
@@ -35,14 +34,10 @@ export class PixiApp {
 			screenHeight: this.application.view.height,
 			noTicker: true,
 		})
-		this.viewport.moveCenter(0, 0)
 		this.viewport.setZoom(DEFAULT_ZOOM)
 		this.stage.addChild(this.viewport)
 
 		this.viewport.addChild(this.spriteContainer)
-
-		this.viewport.on('moved', () => (this.dirtyView = true))
-		this.viewport.on('zoomed', () => (this.dirtyView = true))
 
 		// Pixi inspector
 		;(window as any).__PIXI_INSPECTOR_GLOBAL_HOOK__?.register({ PIXI: PIXI })

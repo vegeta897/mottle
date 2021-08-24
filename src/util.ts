@@ -1,5 +1,7 @@
 // TODO: Use @pixi/math and @pixi/math-extras
 
+import { Transform } from './ecs/components'
+
 export class Vector2 {
 	static getMagnitude({ x, y }: Vector2) {
 		return Math.sqrt(x ** 2 + y ** 2)
@@ -19,6 +21,32 @@ export class Vector2 {
 	static equals({ x: x1, y: y1 }: Vector2, { x: x2, y: y2 }: Vector2) {
 		return x1 === x2 && y1 === y2
 	}
+}
+
+export function transformsCollide(eid1: number, eid2: number) {
+	return aabbCollide(
+		Transform.x[eid1],
+		Transform.y[eid1],
+		Transform.width[eid1],
+		Transform.height[eid1],
+		Transform.x[eid2],
+		Transform.y[eid2],
+		Transform.width[eid2],
+		Transform.height[eid2]
+	)
+}
+
+export function aabbCollide(
+	x1: number,
+	y1: number,
+	w1: number,
+	h1: number,
+	x2: number,
+	y2: number,
+	w2: number,
+	h2: number
+) {
+	return x1 < x2 + w2 && x1 + w1 > x2 && y1 < y2 + h2 && y1 + h1 > y2
 }
 
 // https://easings.net/
