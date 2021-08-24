@@ -14,14 +14,11 @@ import {
 import { Sprite, Texture } from 'pixi.js'
 import { DisplayObjects } from './pixi/object_manager'
 import { PixiApp } from './pixi/pixi_app'
-import { Map2D } from './map'
+import { spillPaint } from './paint'
 
 // TODO: We probably don't need sectors anymore
 
 const SECTOR_SIZE = 432
-
-const paintMap = new Map2D(1000, 102)
-console.log(paintMap)
 
 const { spriteContainer } = PixiApp.shared
 
@@ -41,8 +38,6 @@ export enum PaintBucketStates {
 	SPILL,
 }
 
-export const paintBuckets: number[] = []
-
 export function createLevel() {
 	for (let i = 0; i < 8; i++) {
 		const bucketX = Math.floor(
@@ -50,7 +45,6 @@ export function createLevel() {
 		)
 		const bucketY = Math.floor(SECTOR_SIZE / 4 + (rng.next() * SECTOR_SIZE) / 2)
 		const bucket = addEntity(Game.shared.world)
-		paintBuckets.push(bucket)
 		addComponent(Game.shared.world, Transform, bucket)
 		Transform.x[bucket] = bucketX
 		Transform.y[bucket] = bucketY
@@ -60,12 +54,12 @@ export function createLevel() {
 		bucketSprite.setTransform(bucketX, bucketY, 1.5, 2)
 		bucketSprite.anchor.x = 0.5
 		bucketSprite.anchor.y = 0.75
-		bucketSprite.tint = 0x3399ee
+		bucketSprite.tint = 0x1192a7
 		DisplayObjects[bucket] = bucketSprite
 		spriteContainer.addChild(bucketSprite)
 		addComponent(Game.shared.world, DisplayObject, bucket)
 		addComponent(Game.shared.world, PaintBucket, bucket)
-		if (i === 0) PaintBucket.state[bucket] = PaintBucketStates.IDLE
+		PaintBucket.state[bucket] = PaintBucketStates.IDLE
 		addComponent(Game.shared.world, Velocity, bucket)
 		addComponent(Game.shared.world, Drag, bucket)
 		Drag.rate[bucket] = 0.2
@@ -82,10 +76,11 @@ export function spillBucket(
 ) {
 	PaintBucket.state[bucket] = PaintBucketStates.SPILL
 	removeComponent(Game.shared.world, Force, bucket)
-	Velocity.x[bucket] = velocityX * 2
-	Velocity.y[bucket] = velocityY * 2
+	Velocity.x[bucket] += velocityX * 2
+	Velocity.y[bucket] += velocityY * 2
 	Drag.rate[bucket] = 0.1
 	DisplayObjects[bucket].rotation = Math.PI / 2
+	spillPaint(Transform.x[bucket], Transform.y[bucket], velocityX, velocityY)
 }
 
 export function onViewportChange() {

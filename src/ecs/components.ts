@@ -35,3 +35,5 @@ export const PaintBucket = defineComponent({
 	state: Types.ui8,
 	stateTime: Types.ui32,
 })
+
+export const PaintBall = defineComponent({ paint: Types.ui32 })

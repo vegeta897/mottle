@@ -5,28 +5,26 @@ import {
 	defineSystem,
 	Not,
 	removeComponent,
+	removeEntity,
 } from 'bitecs'
 import {
 	AreaConstraint,
 	DisplayObject,
 	Drag,
 	Force,
+	PaintBall,
 	PaintBucket,
 	Player,
 	Transform,
 	Velocity,
 } from './components'
 import { clamp, transformsCollide, Vector2 } from '../util'
-import { DisplayObjects } from '../pixi/object_manager'
 import InputManager from '../input'
 import { PixiApp } from '../pixi/pixi_app'
-import { player, playerSprite, updatePlayerColor } from '../'
-import {
-	onViewportChange,
-	paintBuckets,
-	PaintBucketStates,
-	spillBucket,
-} from '../level'
+import { player, updatePlayerColor } from '../'
+import { PaintBucketStates, spillBucket } from '../level'
+import Prando from 'prando'
+import { DisplayObjects } from '../pixi/object_manager'
 
 const { mouse } = InputManager.shared
 
@@ -54,7 +52,7 @@ export const playerSystem = defineSystem((world) => {
 			Player.painting[player]++
 		}
 		Player.painting[player]++
-		Player.paint[player]--
+		// Player.paint[player]--
 		if (Player.paint[player] === 0) Player.painting[player] = 0
 		updatePlayerColor()
 	}
@@ -63,7 +61,7 @@ export const playerSystem = defineSystem((world) => {
 		y: mouse.local.y - Transform.y[player],
 	}
 	const deltaMagnitude = Vector2.getMagnitude(delta)
-	if (deltaMagnitude < 12 * viewport.scaled) {
+	if (deltaMagnitude < 12 * PixiApp.shared.viewport.scaled) {
 		removeComponent(world, Force, player)
 	} else {
 		const momentumFactor = clamp(Velocity.speed[player] / 3, 0.3, 1)
@@ -81,6 +79,8 @@ export const playerSystem = defineSystem((world) => {
 	return world
 })
 
+const rng = new Prando()
+
 const paintBucketQuery = defineQuery([PaintBucket])
 
 export const paintBucketSystem = defineSystem((world) => {
@@ -94,8 +94,8 @@ export const paintBucketSystem = defineSystem((world) => {
 			PaintBucket.stateTime[eid] = 0
 			addComponent(world, Force, eid)
 			Force.maxSpeed[eid] = 0.7
-			Force.x[eid] = (Math.random() > 0.5 ? 1 : -1) * 0.1
-			Force.y[eid] = (Math.random() > 0.5 ? 1 : -1) * 0.1
+			Force.x[eid] = (rng.nextBoolean() ? 1 : -1) * 0.1
+			Force.y[eid] = (rng.nextBoolean() ? 1 : -1) * 0.1
 		} else if (
 			PaintBucket.state[eid] === PaintBucketStates.WALK &&
 			PaintBucket.stateTime[eid] === 100
@@ -185,34 +185,34 @@ export const areaConstraintSystem = defineSystem((world) => {
 	return world
 })
 
-export const pickupSystem = defineSystem((world) => {
-	paintBuckets.forEach((bucket) => {
+export const collisionSystem = defineSystem((world) => {
+	if (Velocity.speed[player] < 3) return world
+	for (let eid of paintBucketQuery(world)) {
 		if (
-			PaintBucket.state[bucket] !== PaintBucketStates.SPILL &&
-			transformsCollide(player, bucket)
+			PaintBucket.state[eid] !== PaintBucketStates.SPILL &&
+			transformsCollide(player, eid)
 		) {
 			Player.paint[player] += 75
 			updatePlayerColor()
-			spillBucket(bucket, Velocity.x[player], Velocity.y[player])
+			spillBucket(eid, Velocity.x[player], Velocity.y[player])
 		}
-	})
-	return world
-})
-
-const spriteQuery = defineQuery([Changed(Transform), DisplayObject])
-
-export const spriteSystem = defineSystem((world) => {
-	for (let eid of spriteQuery(world)) {
-		DisplayObjects[eid].x = Math.floor(Transform.x[eid])
-		DisplayObjects[eid].y = Math.floor(Transform.y[eid])
 	}
 	return world
 })
 
-const { viewport } = PixiApp.shared
+const paintBallQuery = defineQuery([PaintBall, DisplayObject])
 
-export const cameraSystem = defineSystem((world) => {
-	onViewportChange()
-	viewport.moveCenter(playerSprite.x + 192, viewport.worldScreenHeight / 2 - 12)
+export const paintBallSystem = defineSystem((world) => {
+	for (let eid of paintBallQuery(world)) {
+		PaintBall.paint[eid]--
+		if (PaintBall.paint[eid] === 0) {
+			DisplayObjects[eid].destroy()
+			delete DisplayObjects[eid]
+			removeEntity(world, eid)
+		} else {
+			DisplayObjects[eid].scale.x = PaintBall.paint[eid] * 0.02
+			DisplayObjects[eid].scale.y = PaintBall.paint[eid] * 0.02
+		}
+	}
 	return world
 })

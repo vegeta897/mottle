@@ -1,17 +1,17 @@
 import { createWorld, pipe, registerComponents } from 'bitecs'
 import {
 	areaConstraintSystem,
-	cameraSystem,
 	dragSystem,
 	forceSystem,
 	inputSystem,
 	paintBucketSystem,
-	pickupSystem,
+	collisionSystem,
 	playerSystem,
-	spriteSystem,
 	velocitySystem,
+	paintBallSystem,
 } from './systems'
 import { Force } from './components'
+import { cameraSystem, spriteSystem } from './render_systems'
 
 export default class ECS {
 	world = createWorld()
@@ -23,7 +23,8 @@ export default class ECS {
 		dragSystem,
 		velocitySystem,
 		areaConstraintSystem,
-		pickupSystem
+		collisionSystem,
+		paintBallSystem
 	)
 	renderPipeline = pipe(spriteSystem, cameraSystem)
 	constructor() {
