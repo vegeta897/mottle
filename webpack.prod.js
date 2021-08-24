@@ -11,7 +11,6 @@ module.exports = merge(common, {
 		minimizer: [
 			new ESBuildMinifyPlugin({
 				target: 'esnext',
-				keepNames: true, // TODO: Turn this off for next bitECS version
 			}),
 		],
 	},
