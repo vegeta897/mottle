@@ -13,7 +13,7 @@ export default class Game {
 	paused = false
 	interpolate = true
 
-	async init() {
+	init() {
 		const stats = new Stats()
 		document.body.appendChild(stats.dom)
 

@@ -6,6 +6,8 @@ export const WIDTH = 1200
 export const HEIGHT = 864
 export const DEFAULT_ZOOM = 2
 
+PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST
+
 export class PixiApp {
 	private static _shared: PixiApp = new PixiApp()
 	application = new Application({
@@ -17,7 +19,7 @@ export class PixiApp {
 	render = () => this.application.render()
 	stage: Container = this.application.stage
 	viewport: Viewport
-	spriteContainer = new Container()
+	spriteContainer: Container = new Container()
 
 	constructor() {
 		// Do not use PIXI's ticker

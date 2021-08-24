@@ -21,7 +21,7 @@ import {
 import { clamp, transformsCollide, Vector2 } from '../util'
 import InputManager from '../input'
 import { PixiApp } from '../pixi/pixi_app'
-import { player, updatePlayerColor } from '../'
+import { player } from '../'
 import { PaintBucketStates, spillBucket } from '../level'
 import Prando from 'prando'
 import { DisplayObjects } from '../pixi/object_manager'
@@ -54,7 +54,6 @@ export const playerSystem = defineSystem((world) => {
 		Player.painting[player]++
 		// Player.paint[player]--
 		if (Player.paint[player] === 0) Player.painting[player] = 0
-		updatePlayerColor()
 	}
 	const delta = {
 		x: mouse.local.x - Transform.x[player],
@@ -193,7 +192,6 @@ export const collisionSystem = defineSystem((world) => {
 			transformsCollide(player, eid)
 		) {
 			Player.paint[player] += 75
-			updatePlayerColor()
 			spillBucket(eid, Velocity.x[player], Velocity.y[player])
 		}
 	}

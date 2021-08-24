@@ -1,21 +1,25 @@
 import type { DisplayObject } from 'pixi.js'
-import { alignToGrid, Vector2 } from '../util'
-import { Container, Graphics, Circle } from 'pixi.js'
+import { Vector2 } from '../util'
+import { Container, Graphics } from 'pixi.js'
 import * as PIXI from 'pixi.js'
 import { PixiApp } from './pixi_app'
 
 export const DisplayObjects: DisplayObject[] = []
 
-const SPLAT_SIZE = 4
-
 const splatContainer: Container = new Container()
 PixiApp.shared.viewport.addChildAt(splatContainer, 0)
 
-const splats: Map<string, DisplayObject> = new Map()
-
-const splat = new Graphics()
-splat.beginFill(0xff88aa)
-splat.drawRect(0, 0, SPLAT_SIZE, SPLAT_SIZE)
+const axis = new Graphics()
+axis.lineStyle({ width: 1, color: 0xaa9944, alignment: 0 })
+axis.moveTo(-24, 0)
+axis.lineTo(24, 0)
+axis.moveTo(1, -24)
+axis.lineTo(1, 24)
+axis.beginFill(0x775522)
+axis.lineStyle({ width: 0 })
+axis.drawRect(0, 0, 1, 1)
+axis.y = PixiApp.shared.viewport.worldScreenHeight / 2
+splatContainer.addChild(axis)
 
 let currentLine: Graphics | null = null
 let currentLinePoints = 0
@@ -45,36 +49,4 @@ export function paintLine(
 		currentLinePoints++
 		lastPoint = { x, y }
 	}
-}
-
-export function addSplat({ x, y }: Vector2, brushSize = 12) {
-	const brushCircle = new Circle(x, y, brushSize / 2)
-	const brushRect = brushCircle.getBounds()
-	const [left, top /*, right, bottom*/] = [
-		brushRect.left,
-		brushRect.top,
-		// brushRect.right,
-		// brushRect.bottom,
-	].map((v) => alignToGrid(v, SPLAT_SIZE))
-	let splatsAdded = 0
-	for (let ix = 0; ix <= Math.ceil(brushSize / SPLAT_SIZE); ix++) {
-		for (let iy = 0; iy <= Math.ceil(brushSize / SPLAT_SIZE); iy++) {
-			const splatX = left + ix * SPLAT_SIZE
-			const splatY = top + iy * SPLAT_SIZE
-			if (!brushCircle.contains(splatX, splatY)) continue
-			const grid = Vector2.toString({ x: splatX, y: splatY })
-			if (!splats.has(grid)) {
-				splatsAdded++
-				splats.set(
-					grid,
-					splatContainer.addChild(
-						splat
-							.clone()
-							.setTransform(splatX - SPLAT_SIZE / 2, splatY - SPLAT_SIZE / 2)
-					)
-				)
-			}
-		}
-	}
-	return splatsAdded
 }

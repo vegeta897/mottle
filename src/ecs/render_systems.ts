@@ -19,6 +19,6 @@ const { viewport } = PixiApp.shared
 
 export const cameraSystem = defineSystem((world) => {
 	onViewportChange()
-	viewport.moveCenter(playerSprite.x + 192, viewport.worldScreenHeight / 2 - 12)
+	viewport.moveCenter(playerSprite.x + 144, viewport.worldScreenHeight / 2 - 12)
 	return world
 })

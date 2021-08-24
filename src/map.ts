@@ -16,4 +16,8 @@ export class Map2D {
 	set(x: number, y: number, value: number) {
 		this._data[x * this.width + y] = value
 	}
+
+	inBounds(x: number, y: number) {
+		return x >= 0 && y >= 0 && x < this.width && y < this.height
+	}
 }

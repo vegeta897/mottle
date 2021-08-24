@@ -21,6 +21,20 @@ export class Vector2 {
 	static equals({ x: x1, y: y1 }: Vector2, { x: x2, y: y2 }: Vector2) {
 		return x1 === x2 && y1 === y2
 	}
+	static rotate({ x, y }: Vector2, radians: number) {
+		return {
+			x: x * Math.cos(radians) - y * Math.sin(radians),
+			y: x * Math.sin(radians) + y * Math.cos(radians),
+		}
+	}
+}
+
+export function clamp(val: number, min: number, max: number) {
+	return Math.max(min, Math.min(max, val))
+}
+
+export function alignToGrid(val: number, gridSize: number): number {
+	return Math.floor(val / gridSize) * gridSize
 }
 
 export function transformsCollide(eid1: number, eid2: number) {
@@ -61,12 +75,4 @@ export function easeInSine(x: number): number {
 }
 export function easeOutSine(x: number): number {
 	return Math.sin((x * Math.PI) / 2)
-}
-
-export function clamp(val: number, min: number, max: number) {
-	return Math.max(min, Math.min(max, val))
-}
-
-export function alignToGrid(val: number, gridSize: number): number {
-	return Math.floor(val / gridSize) * gridSize
 }

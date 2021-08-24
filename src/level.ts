@@ -48,13 +48,11 @@ export function createLevel() {
 		addComponent(Game.shared.world, Transform, bucket)
 		Transform.x[bucket] = bucketX
 		Transform.y[bucket] = bucketY
-		Transform.width[bucket] = 24
+		Transform.width[bucket] = 14
 		Transform.height[bucket] = 24
-		const bucketSprite = new Sprite(Texture.WHITE)
-		bucketSprite.setTransform(bucketX, bucketY, 1.5, 2)
-		bucketSprite.anchor.x = 0.5
-		bucketSprite.anchor.y = 0.75
-		bucketSprite.tint = 0x1192a7
+		const bucketSprite = new Sprite(Texture.from('bucket'))
+		bucketSprite.setTransform(bucketX, bucketY)
+		bucketSprite.anchor.set(1, 0.625)
 		DisplayObjects[bucket] = bucketSprite
 		spriteContainer.addChild(bucketSprite)
 		addComponent(Game.shared.world, DisplayObject, bucket)
