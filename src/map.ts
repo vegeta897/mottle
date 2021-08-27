@@ -10,11 +10,11 @@ export class Map2D {
 	}
 
 	get(x: number, y: number): number {
-		return this._data[x * this.width + y]
+		return this._data[x * this.height + y]
 	}
 
 	set(x: number, y: number, value: number) {
-		this._data[x * this.width + y] = value
+		this._data[x * this.height + y] = value
 	}
 
 	inBounds(x: number, y: number) {
