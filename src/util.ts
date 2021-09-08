@@ -33,10 +33,6 @@ export function clamp(val: number, min: number, max: number) {
 	return Math.max(min, Math.min(max, val))
 }
 
-export function alignToGrid(val: number, gridSize: number): number {
-	return Math.floor(val / gridSize) * gridSize
-}
-
 export function transformsCollide(eid1: number, eid2: number) {
 	return aabbCollide(
 		Transform.x[eid1],

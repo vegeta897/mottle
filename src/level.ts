@@ -76,7 +76,7 @@ export function spillBucket(
 	removeComponent(Game.shared.world, Force, bucket)
 	Velocity.x[bucket] += velocityX * 2
 	Velocity.y[bucket] += velocityY * 2
-	Drag.rate[bucket] = 0.1
+	Drag.rate[bucket] = 0.2
 	DisplayObjects[bucket].rotation = Math.PI / 2
 	spillPaint(Transform.x[bucket], Transform.y[bucket], velocityX, velocityY)
 }

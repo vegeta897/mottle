@@ -4,7 +4,7 @@ import { Container, Graphics } from 'pixi.js'
 import * as PIXI from 'pixi.js'
 import { PixiApp } from './pixi_app'
 
-export const DisplayObjects: DisplayObject[] = []
+export const DisplayObjects: DisplayObject[] = [] // Indexed by entity ID
 
 const splatContainer: Container = new Container()
 PixiApp.shared.viewport.addChildAt(splatContainer, 0)

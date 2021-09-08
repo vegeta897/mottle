@@ -25,6 +25,7 @@ import { player } from '../'
 import { PaintBucketStates, spillBucket } from '../level'
 import Prando from 'prando'
 import { DisplayObjects } from '../pixi/object_manager'
+import { paintGround } from '../paint'
 
 const { mouse } = InputManager.shared
 
@@ -139,8 +140,8 @@ export const dragSystem: System = (world) => {
 		if (Velocity.x[eid] === 0 && Velocity.y[eid] === 0) continue
 		Velocity.x[eid] *= 1 - Drag.rate[eid]
 		Velocity.y[eid] *= 1 - Drag.rate[eid]
-		if (Math.abs(Velocity.x[eid]) < 0.1) Velocity.x[eid] = 0
-		if (Math.abs(Velocity.y[eid]) < 0.1) Velocity.y[eid] = 0
+		if (Math.abs(Velocity.x[eid]) < 0.01) Velocity.x[eid] = 0
+		if (Math.abs(Velocity.y[eid]) < 0.01) Velocity.y[eid] = 0
 	}
 	return world
 }
@@ -203,14 +204,19 @@ const paintBallQuery = defineQuery([PaintBall, DisplayObject])
 
 export const paintBallSystem: System = (world) => {
 	for (let eid of paintBallQuery(world)) {
-		PaintBall.paint[eid]--
-		if (PaintBall.paint[eid] === 0) {
+		const tilesPainted = paintGround(
+			{ x: Transform.x[eid], y: Transform.y[eid] },
+			PaintBall.paint[eid] * 2
+		)
+		Drag.rate[eid] = tilesPainted ? 0.05 : 0.01
+		PaintBall.paint[eid] = Math.max(0, PaintBall.paint[eid] - tilesPainted)
+		if (PaintBall.paint[eid] === 0 || Velocity.speed[eid] === 0) {
 			DisplayObjects[eid].destroy()
 			delete DisplayObjects[eid]
 			removeEntity(world, eid)
 		} else {
-			DisplayObjects[eid].scale.x = PaintBall.paint[eid] * 0.02
-			DisplayObjects[eid].scale.y = PaintBall.paint[eid] * 0.02
+			DisplayObjects[eid].scale.x = PaintBall.paint[eid] * 0.1
+			DisplayObjects[eid].scale.y = PaintBall.paint[eid] * 0.1
 		}
 	}
 	return world
