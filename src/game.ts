@@ -7,7 +7,7 @@ export default class Game {
 	ecs = new ECS()
 	world = this.ecs.world
 	tick = 0
-	tickRate = 60
+	tickRate = 15
 	tickTime = 1000 / this.tickRate
 	deltaTime = 0
 	paused = false

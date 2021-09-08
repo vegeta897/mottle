@@ -1,5 +1,5 @@
 import { Map2D } from './map'
-import { Circle, Container, Graphics } from 'pixi.js'
+import { Container, Graphics } from 'pixi.js'
 import { PixiApp } from './pixi/pixi_app'
 import { DisplayObjects } from './pixi/object_manager'
 import { addComponent, addEntity } from 'bitecs'
@@ -76,18 +76,12 @@ const splat = new Graphics()
 splat.beginFill(0xff88aa)
 splat.drawRect(0, 0, SPLAT_SIZE, SPLAT_SIZE)
 
-const paintCircle = new Circle() // Re-used object
-
 export function paintGround({ x, y }: Vector2, brushSize: number): number {
-	paintCircle.radius = brushSize / 2
-	paintCircle.x = x
-	paintCircle.y = y
-	const brushRect = paintCircle.getBounds()
-	const [left, top, right, bottom] = [
-		brushRect.left,
-		brushRect.top,
-		brushRect.right,
-		brushRect.bottom,
+	const [left, right, top, bottom] = [
+		x - brushSize / 2,
+		x + brushSize / 2,
+		y - brushSize / 2,
+		y + brushSize / 2,
 	].map((v) => Math.floor(v / SPLAT_SIZE))
 	let tilesPainted = 0
 	for (let ix = 0; ix <= right - left; ix++) {
