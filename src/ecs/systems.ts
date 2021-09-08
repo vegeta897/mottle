@@ -2,10 +2,10 @@ import {
 	addComponent,
 	Changed,
 	defineQuery,
-	defineSystem,
 	Not,
 	removeComponent,
 	removeEntity,
+	System,
 } from 'bitecs'
 import {
 	AreaConstraint,
@@ -28,19 +28,19 @@ import { DisplayObjects } from '../pixi/object_manager'
 
 const { mouse } = InputManager.shared
 
-export const inputSystem = defineSystem((world) => {
+export const inputSystem: System = (world) => {
 	mouse.global = mouse.data.global
 	mouse.local = PixiApp.shared.viewport.toLocal(mouse.global)
 	mouse.leftButton = mouse.startedInBounds && !!(mouse.data.buttons & 1)
 	mouse.rightButton = mouse.startedInBounds && !!(mouse.data.buttons & 2)
 	return world
-})
+}
 
 const RUN_SPEED = 3 // Pixels per tick
 const ACCELERATION = 0.8
 const PAINT_FACTOR = 1.5 // Speed and acceleration multiplier
 
-export const playerSystem = defineSystem((world) => {
+export const playerSystem: System = (world) => {
 	if (!mouse.leftButton) {
 		removeComponent(world, Force, player)
 		return world
@@ -76,13 +76,14 @@ export const playerSystem = defineSystem((world) => {
 		Force.y[player] = force.y * momentumFactor
 	}
 	return world
-})
+}
 
 const rng = new Prando()
 
 const paintBucketQuery = defineQuery([PaintBucket])
 
-export const paintBucketSystem = defineSystem((world) => {
+// TODO: Slo-mo right before and during impact?
+export const paintBucketSystem: System = (world) => {
 	for (let eid of paintBucketQuery(world)) {
 		if (PaintBucket.state[eid] === PaintBucketStates.SLEEP) continue
 		if (
@@ -106,13 +107,13 @@ export const paintBucketSystem = defineSystem((world) => {
 		PaintBucket.stateTime[eid]++
 	}
 	return world
-})
+}
 
 // TODO: Turning while painting regains some momentum, like in roller-blading
 
 const forceQuery = defineQuery([Force, Velocity])
 
-export const forceSystem = defineSystem((world) => {
+export const forceSystem: System = (world) => {
 	for (let eid of forceQuery(world)) {
 		let newVelocity = {
 			x: Velocity.x[eid] + Force.x[eid],
@@ -129,11 +130,11 @@ export const forceSystem = defineSystem((world) => {
 		Velocity.y[eid] = newVelocity.y
 	}
 	return world
-})
+}
 
 const dragQuery = defineQuery([Drag, Velocity, Not(Force)])
 
-export const dragSystem = defineSystem((world) => {
+export const dragSystem: System = (world) => {
 	for (let eid of dragQuery(world)) {
 		if (Velocity.x[eid] === 0 && Velocity.y[eid] === 0) continue
 		Velocity.x[eid] *= 1 - Drag.rate[eid]
@@ -142,11 +143,11 @@ export const dragSystem = defineSystem((world) => {
 		if (Math.abs(Velocity.y[eid]) < 0.1) Velocity.y[eid] = 0
 	}
 	return world
-})
+}
 
 const velocityQuery = defineQuery([Transform, Velocity])
 
-export const velocitySystem = defineSystem((world) => {
+export const velocitySystem: System = (world) => {
 	for (let eid of velocityQuery(world)) {
 		Velocity.speed[eid] = Vector2.getMagnitude({
 			x: Velocity.x[eid],
@@ -164,11 +165,11 @@ export const velocitySystem = defineSystem((world) => {
 	// 	paintLine(playerSprite, Player.painting[player] === 1, paintRemaining)
 	// }
 	return world
-})
+}
 
 const areaConstraintQuery = defineQuery([Changed(Transform), AreaConstraint])
 
-export const areaConstraintSystem = defineSystem((world) => {
+export const areaConstraintSystem: System = (world) => {
 	for (let eid of areaConstraintQuery(world)) {
 		Transform.x[eid] = clamp(
 			Transform.x[eid],
@@ -182,9 +183,9 @@ export const areaConstraintSystem = defineSystem((world) => {
 		)
 	}
 	return world
-})
+}
 
-export const collisionSystem = defineSystem((world) => {
+export const collisionSystem: System = (world) => {
 	if (Velocity.speed[player] < 3) return world
 	for (let eid of paintBucketQuery(world)) {
 		if (
@@ -196,11 +197,11 @@ export const collisionSystem = defineSystem((world) => {
 		}
 	}
 	return world
-})
+}
 
 const paintBallQuery = defineQuery([PaintBall, DisplayObject])
 
-export const paintBallSystem = defineSystem((world) => {
+export const paintBallSystem: System = (world) => {
 	for (let eid of paintBallQuery(world)) {
 		PaintBall.paint[eid]--
 		if (PaintBall.paint[eid] === 0) {
@@ -213,4 +214,4 @@ export const paintBallSystem = defineSystem((world) => {
 		}
 	}
 	return world
-})
+}
