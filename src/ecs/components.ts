@@ -6,7 +6,7 @@ const Vector2 = {
 }
 
 export const Player = defineComponent({
-	painting: Types.ui16,
+	painting: Types.ui32,
 	paint: Types.ui16,
 })
 

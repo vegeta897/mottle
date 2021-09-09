@@ -2,7 +2,6 @@ import { Changed, defineQuery, System } from 'bitecs'
 import { DisplayObject, Transform } from './components'
 import { DisplayObjects } from '../pixi/object_manager'
 import { PixiApp } from '../pixi/pixi_app'
-import { onViewportChange } from '../level'
 import { playerSprite } from '../index'
 
 const spriteQuery = defineQuery([Changed(Transform), DisplayObject])
@@ -18,7 +17,6 @@ export const spriteSystem: System = (world) => {
 const { viewport } = PixiApp.shared
 
 export const cameraSystem: System = (world) => {
-	onViewportChange()
-	viewport.moveCenter(playerSprite.x + 144, viewport.worldScreenHeight / 2 - 12)
+	viewport.moveCenter(playerSprite.x + 96, playerSprite.y + 12)
 	return world
 }

@@ -32,14 +32,16 @@ async function startGame() {
 	Player.paint[player] = 200
 	addComponent(game.world, Transform, player)
 	Transform.y[player] = viewport.worldScreenHeight / 2
+	console.log(viewport.worldScreenHeight / 2)
 	Transform.width[player] = 18
 	Transform.height[player] = 24
 	addComponent(game.world, Velocity, player)
 	addComponent(game.world, Drag, player)
 	Drag.rate[player] = 0.3
 	addComponent(game.world, AreaConstraint, player)
+	AreaConstraint.top[player] = 0
 	AreaConstraint.left[player] = -12
-	AreaConstraint.bottom[player] = 408
+	AreaConstraint.bottom[player] = 264
 	AreaConstraint.right[player] = 4080
 	addComponent(game.world, DisplayObject, player)
 
@@ -47,6 +49,14 @@ async function startGame() {
 	playerSprite.anchor.set(0.5, 0.625)
 	DisplayObjects[player] = playerSprite
 	spriteContainer.addChild(playerSprite)
+
+	viewport.clamp({
+		top: -12,
+		left: -24,
+		right: 4080,
+		bottom: 276,
+		underflow: 'none',
+	})
 
 	game.init()
 	createLevel()

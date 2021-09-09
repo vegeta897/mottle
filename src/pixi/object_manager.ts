@@ -7,14 +7,27 @@ export const DisplayObjects: DisplayObject[] = [] // Indexed by entity ID
 const splatContainer: Container = new Container()
 PixiApp.shared.viewport.addChildAt(splatContainer, 0)
 
+const { worldHeight } = PixiApp.shared.viewport
+
 const axis = new Graphics()
 axis.lineStyle({ width: 1, color: 0xaa9944, alignment: 0 })
-axis.moveTo(-24, 0)
 axis.lineTo(24, 0)
 axis.moveTo(1, -24)
 axis.lineTo(1, 24)
 axis.beginFill(0x775522)
 axis.lineStyle({ width: 0 })
 axis.drawRect(0, 0, 1, 1)
-axis.y = PixiApp.shared.viewport.worldScreenHeight / 2
+axis.y = worldHeight / 2
 splatContainer.addChild(axis)
+
+const border = new Graphics()
+border.lineStyle({ width: 1, color: 0xaa9944, alignment: 0 })
+border.moveTo(0, 0)
+border.lineTo(24, 0)
+border.moveTo(0, 0)
+border.lineTo(0, 24)
+border.moveTo(0, worldHeight)
+border.lineTo(24, worldHeight)
+border.moveTo(0, worldHeight)
+border.lineTo(0, worldHeight - 24)
+splatContainer.addChild(border)

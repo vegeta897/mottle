@@ -20,7 +20,7 @@ import {
 } from './components'
 import { clamp, transformsCollide, Vector2 } from '../util'
 import InputManager from '../input'
-import { PixiApp } from '../pixi/pixi_app'
+import { DEFAULT_ZOOM, PixiApp } from '../pixi/pixi_app'
 import { player } from '../'
 import { PaintBucketStates, spillBucket } from '../level'
 import Prando from 'prando'
@@ -186,6 +186,12 @@ export const areaConstraintSystem: System = (world) => {
 	return world
 }
 
+const actionZoomOptions = {
+	scale: DEFAULT_ZOOM,
+	time: 400,
+	ease: 'easeInOutCubic',
+}
+
 export const collisionSystem: System = (world) => {
 	if (Velocity.speed[player] < 3) return world
 	for (let eid of paintBucketQuery(world)) {
@@ -194,6 +200,11 @@ export const collisionSystem: System = (world) => {
 			transformsCollide(player, eid)
 		) {
 			Player.paint[player] += 75
+			PixiApp.shared.viewport.animate({
+				...actionZoomOptions,
+				scale: DEFAULT_ZOOM + 0.5,
+				callbackOnComplete: (viewport) => viewport.animate(actionZoomOptions),
+			})
 			spillBucket(eid, Velocity.x[player], Velocity.y[player])
 		}
 	}

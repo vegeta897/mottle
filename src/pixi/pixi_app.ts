@@ -4,7 +4,7 @@ import { Viewport } from 'pixi-viewport'
 
 export const WIDTH = 1200
 export const HEIGHT = 864
-export const DEFAULT_ZOOM = 2
+export const DEFAULT_ZOOM = 3
 
 PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST
 
@@ -34,6 +34,8 @@ export class PixiApp {
 		this.viewport = new Viewport({
 			screenWidth: this.application.view.width,
 			screenHeight: this.application.view.height,
+			worldWidth: 4080,
+			worldHeight: 264,
 			noTicker: true,
 		})
 		this.viewport.setZoom(DEFAULT_ZOOM)

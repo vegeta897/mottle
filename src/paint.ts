@@ -46,7 +46,7 @@ export function spillPaint(
 		Transform.width[entity] = 4
 		Transform.height[entity] = 4
 		addComponent(Game.shared.world, AreaConstraint, entity)
-		AreaConstraint.bottom[entity] = 408
+		AreaConstraint.bottom[entity] = 264
 		AreaConstraint.right[entity] = 4080
 		addComponent(Game.shared.world, Velocity, entity)
 		const rotated = Vector2.rotate(
@@ -64,13 +64,13 @@ export function spillPaint(
 	}
 }
 
-const SPLAT_SIZE = 8
+const SPLAT_SIZE = 6
 
 const floorPaintContainer: Container = new Container()
 floorPaintContainer.setTransform(SPLAT_SIZE / 2, SPLAT_SIZE / 2)
 viewport.addChildAt(floorPaintContainer, 0)
 
-const paintMap = new Map2D(1000, 102)
+const paintMap = new Map2D(1000, 48)
 
 const splat = new Graphics()
 splat.beginFill(0xff88aa)
