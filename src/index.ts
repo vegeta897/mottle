@@ -31,21 +31,22 @@ async function startGame() {
 	addComponent(game.world, Player, player)
 	Player.paint[player] = 200
 	addComponent(game.world, Transform, player)
+	Transform.x[player] = 0
 	Transform.y[player] = viewport.worldScreenHeight / 2
-	Transform.width[player] = 18
+	Transform.width[player] = 28
 	Transform.height[player] = 24
 	addComponent(game.world, Velocity, player)
 	addComponent(game.world, Drag, player)
 	Drag.rate[player] = 0.3
 	addComponent(game.world, AreaConstraint, player)
-	AreaConstraint.top[player] = 0
+	AreaConstraint.top[player] = 12
 	AreaConstraint.left[player] = -12
 	AreaConstraint.bottom[player] = 264
 	AreaConstraint.right[player] = 4080
 	addComponent(game.world, DisplayObject, player)
 
 	playerSprite = new Sprite(Texture.from('player'))
-	playerSprite.anchor.set(0.5, 0.625)
+	playerSprite.anchor.set(0.5, 1)
 	DisplayObjects[player] = playerSprite
 	spriteContainer.addChild(playerSprite)
 

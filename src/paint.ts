@@ -46,7 +46,7 @@ export function spillPaint(
 		Transform.width[entity] = 8
 		Transform.height[entity] = 8
 		addComponent(Game.shared.world, AreaConstraint, entity)
-		AreaConstraint.top[entity] = 0
+		AreaConstraint.top[entity] = 12
 		AreaConstraint.left[entity] = 0
 		AreaConstraint.bottom[entity] = 264
 		AreaConstraint.right[entity] = 4080
