@@ -20,7 +20,7 @@ import {
 } from './components'
 import { clamp, transformsCollide, Vector2 } from '../util'
 import InputManager from '../input'
-import { DEFAULT_ZOOM, PixiApp } from '../pixi/pixi_app'
+import { PixiApp } from '../pixi/pixi_app'
 import { player } from '../'
 import { PaintBucketStates, spillBucket } from '../level'
 import Prando from 'prando'
@@ -61,7 +61,7 @@ export const playerSystem: System = (world) => {
 		y: mouse.local.y - Transform.y[player],
 	}
 	const deltaMagnitude = Vector2.getMagnitude(delta)
-	if (deltaMagnitude < 12 * PixiApp.shared.viewport.scaled) {
+	if (deltaMagnitude < 12 /** PixiApp.shared.viewport.scaled*/) {
 		removeComponent(world, Force, player)
 	} else {
 		const momentumFactor = clamp(Velocity.speed[player] / 3, 0.3, 1)
@@ -186,12 +186,6 @@ export const areaConstraintSystem: System = (world) => {
 	return world
 }
 
-const actionZoomOptions = {
-	scale: DEFAULT_ZOOM,
-	time: 400,
-	ease: 'easeInOutCubic',
-}
-
 export const collisionSystem: System = (world) => {
 	if (Velocity.speed[player] < 3) return world
 	for (let eid of paintBucketQuery(world)) {
@@ -200,11 +194,6 @@ export const collisionSystem: System = (world) => {
 			transformsCollide(player, eid)
 		) {
 			Player.paint[player] += 75
-			PixiApp.shared.viewport.animate({
-				...actionZoomOptions,
-				scale: DEFAULT_ZOOM + 0.5,
-				callbackOnComplete: (viewport) => viewport.animate(actionZoomOptions),
-			})
 			spillBucket(eid, Velocity.x[player], Velocity.y[player])
 		}
 	}
@@ -226,8 +215,10 @@ export const paintBallSystem: System = (world) => {
 			delete DisplayObjects[eid]
 			removeEntity(world, eid)
 		} else {
-			DisplayObjects[eid].scale.x = PaintBall.paint[eid] * 0.1
-			DisplayObjects[eid].scale.y = PaintBall.paint[eid] * 0.1
+			const scale = PaintBall.paint[eid] * 0.1
+			DisplayObjects[eid].scale.x = scale
+			DisplayObjects[eid].scale.y = scale
+			Transform.width[eid] = 8 * scale
 		}
 	}
 	return world

@@ -32,7 +32,6 @@ async function startGame() {
 	Player.paint[player] = 200
 	addComponent(game.world, Transform, player)
 	Transform.y[player] = viewport.worldScreenHeight / 2
-	console.log(viewport.worldScreenHeight / 2)
 	Transform.width[player] = 18
 	Transform.height[player] = 24
 	addComponent(game.world, Velocity, player)
