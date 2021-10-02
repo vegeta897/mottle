@@ -35,22 +35,11 @@ export const inputSystem: System = (world) => {
 
 const RUN_SPEED = 3 // Pixels per tick
 const ACCELERATION = 0.8
-const PAINT_FACTOR = 1.5 // Speed and acceleration multiplier
 
 export const playerSystem: System = (world) => {
 	if (!mouse.leftButton) {
 		removeComponent(world, Force, player)
 		return world
-	}
-	if (Player.paint[player] > 0) {
-		if (Player.painting[player] === 0) {
-			// Not already painting
-		} else {
-			Player.painting[player]++
-		}
-		Player.painting[player]++
-		// Player.paint[player]--
-		if (Player.paint[player] === 0) Player.painting[player] = 0
 	}
 	const delta = {
 		x: mouse.local.x - Transform.x[player],
@@ -66,14 +55,9 @@ export const playerSystem: System = (world) => {
 		removeComponent(world, Force, player)
 	} else {
 		const momentumFactor = clamp(Velocity.speed[player] / 3, 0.3, 1)
-		const paintFactor = Player.paint[player] ? PAINT_FACTOR : 1
-		const force = Vector2.normalize(
-			delta,
-			deltaMagnitude,
-			ACCELERATION * paintFactor
-		)
+		const force = Vector2.normalize(delta, deltaMagnitude, ACCELERATION)
 		addComponent(world, Force, player)
-		Force.maxSpeed[player] = RUN_SPEED * paintFactor
+		Force.maxSpeed[player] = RUN_SPEED
 		Force.x[player] = force.x * momentumFactor
 		Force.y[player] = force.y * momentumFactor
 	}
@@ -84,7 +68,6 @@ const rng = new Prando()
 
 const paintBucketQuery = defineQuery([PaintBucket])
 
-// TODO: Slo-mo right before and during impact?
 export const paintBucketSystem: System = (world) => {
 	for (let eid of paintBucketQuery(world)) {
 		if (PaintBucket.state[eid] === PaintBucketStates.SLEEP) continue
@@ -110,8 +93,6 @@ export const paintBucketSystem: System = (world) => {
 	}
 	return world
 }
-
-// TODO: Turning while painting regains some momentum, like in roller-blading
 
 const forceQuery = defineQuery([Force, Velocity])
 

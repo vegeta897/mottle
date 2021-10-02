@@ -2,9 +2,9 @@ import { Application, Container, Point, Ticker } from 'pixi.js'
 import * as PIXI from 'pixi.js'
 import { Viewport } from 'pixi-viewport'
 
-export const SCREEN_WIDTH = 1200
-export const SCREEN_HEIGHT = 864
-export const DEFAULT_ZOOM = 2
+export const SCREEN_WIDTH = 600
+export const SCREEN_HEIGHT = 432
+export const RENDER_SCALE = 2
 
 PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST
 
@@ -26,8 +26,11 @@ export class PixiApp {
 		Ticker.shared.autoStart = false
 		Ticker.shared.stop()
 
-		// Add app view canvas to page
+		// Configure and add app view canvas to page
 		this.application.view.id = 'viewport'
+		this.application.view.style.width = SCREEN_WIDTH * RENDER_SCALE + 'px'
+		this.application.view.style.height = SCREEN_HEIGHT * RENDER_SCALE + 'px'
+		this.application.view.style.imageRendering = 'pixelated'
 		document.body.appendChild(this.application.view)
 
 		// Create viewport
@@ -38,7 +41,6 @@ export class PixiApp {
 			// worldHeight: 264,
 			noTicker: true,
 		})
-		this.viewport.setZoom(DEFAULT_ZOOM)
 		this.viewport.moveCenter(<Point>{ x: 0, y: 0 })
 		this.stage.addChild(this.viewport)
 
