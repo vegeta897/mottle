@@ -4,15 +4,12 @@ import {
 	defineQuery,
 	Not,
 	removeComponent,
-	removeEntity,
 	System,
 } from 'bitecs'
 import {
 	AreaConstraint,
-	DisplayObject,
 	Drag,
 	Force,
-	PaintBall,
 	PaintBucket,
 	Player,
 	Transform,
@@ -21,11 +18,10 @@ import {
 import { clamp, transformsCollide, Vector2 } from '../util'
 import InputManager from '../input'
 import { PixiApp } from '../pixi/pixi_app'
-import { player } from '../'
-import { PaintBucketStates, spillBucket } from '../level'
+import { player, playerLeft, playerRight, playerSprite } from '../'
+import { PaintBucketStates } from '../level'
 import Prando from 'prando'
-import { DisplayObjects } from '../pixi/object_manager'
-import { paintGround } from '../paint'
+import { paintLine } from '../paint'
 
 const { mouse } = InputManager.shared
 
@@ -59,6 +55,11 @@ export const playerSystem: System = (world) => {
 	const delta = {
 		x: mouse.local.x - Transform.x[player],
 		y: mouse.local.y - Transform.y[player],
+	}
+	if (delta.x > 0) {
+		playerSprite.texture = playerRight
+	} else {
+		playerSprite.texture = playerLeft
 	}
 	const deltaMagnitude = Vector2.getMagnitude(delta)
 	if (deltaMagnitude < 12 /** PixiApp.shared.viewport.scaled*/) {
@@ -157,14 +158,6 @@ export const velocitySystem: System = (world) => {
 		Transform.x[eid] += Velocity.x[eid]
 		Transform.y[eid] += Velocity.y[eid]
 	}
-	// if (
-	// 	(Velocity.x[player] !== 0 || Velocity.y[player] !== 0) &&
-	// 	Player.painting[player] &&
-	// 	Player.paint[player]
-	// ) {
-	// 	const paintRemaining = easedPaintRemaining()
-	// 	paintLine(playerSprite, Player.painting[player] === 1, paintRemaining)
-	// }
 	return world
 }
 
@@ -194,32 +187,14 @@ export const collisionSystem: System = (world) => {
 			transformsCollide(player, eid)
 		) {
 			Player.paint[player] += 75
-			spillBucket(eid, Velocity.x[player], Velocity.y[player])
 		}
 	}
 	return world
 }
 
-const paintBallQuery = defineQuery([PaintBall, DisplayObject])
-
-export const paintBallSystem: System = (world) => {
-	for (let eid of paintBallQuery(world)) {
-		const tilesPainted = paintGround(
-			{ x: Transform.x[eid], y: Transform.y[eid] },
-			PaintBall.paint[eid] * 2
-		)
-		Drag.rate[eid] = tilesPainted ? 0.05 : 0.01
-		PaintBall.paint[eid] = Math.max(0, PaintBall.paint[eid] - tilesPainted)
-		if (PaintBall.paint[eid] === 0 || Velocity.speed[eid] === 0) {
-			DisplayObjects[eid].destroy()
-			delete DisplayObjects[eid]
-			removeEntity(world, eid)
-		} else {
-			const scale = PaintBall.paint[eid] * 0.1
-			DisplayObjects[eid].scale.x = scale
-			DisplayObjects[eid].scale.y = scale
-			Transform.width[eid] = 8 * scale
-		}
+export const paintSystem: System = (world) => {
+	if (Velocity.x[player] !== 0 || Velocity.y[player] !== 0) {
+		paintLine(playerSprite, Player.painting[player] === 1, 20)
 	}
 	return world
 }

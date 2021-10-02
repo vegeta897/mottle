@@ -1,10 +1,10 @@
-import { Application, Container, Ticker } from 'pixi.js'
+import { Application, Container, Point, Ticker } from 'pixi.js'
 import * as PIXI from 'pixi.js'
 import { Viewport } from 'pixi-viewport'
 
 export const SCREEN_WIDTH = 1200
 export const SCREEN_HEIGHT = 864
-export const DEFAULT_ZOOM = 3
+export const DEFAULT_ZOOM = 2
 
 PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST
 
@@ -34,11 +34,12 @@ export class PixiApp {
 		this.viewport = new Viewport({
 			screenWidth: this.application.view.width,
 			screenHeight: this.application.view.height,
-			worldWidth: 4080,
-			worldHeight: 264,
+			// worldWidth: 4080,
+			// worldHeight: 264,
 			noTicker: true,
 		})
 		this.viewport.setZoom(DEFAULT_ZOOM)
+		this.viewport.moveCenter(<Point>{ x: 0, y: 0 })
 		this.stage.addChild(this.viewport)
 
 		this.viewport.addChild(this.spriteContainer)

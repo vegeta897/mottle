@@ -8,7 +8,7 @@ import {
 	collisionSystem,
 	playerSystem,
 	velocitySystem,
-	paintBallSystem,
+	paintSystem,
 } from './systems'
 import { Force } from './components'
 import { cameraSystem, spriteSystem } from './render_systems'
@@ -24,7 +24,7 @@ export default class ECS {
 		velocitySystem,
 		areaConstraintSystem,
 		collisionSystem,
-		paintBallSystem
+		paintSystem
 	)
 	renderPipeline = pipe(spriteSystem, cameraSystem)
 	constructor() {

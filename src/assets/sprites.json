@@ -1,18 +1,26 @@
 { "frames": {
-   "player": {
-    "frame": { "x": 0, "y": 0, "w": 32, "h": 44 },
+   "player-right": {
+    "frame": { "x": 32, "y": 0, "w": 32, "h": 44 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 0, "y": 1, "w": 32, "h": 44 },
+    "sourceSize": { "w": 32, "h": 45 },
+    "duration": 100
+   },
+   "player-left": {
+    "frame": { "x": 0, "y": 0, "w": 32, "h": 45 },
     "rotated": false,
     "trimmed": false,
-    "spriteSourceSize": { "x": 0, "y": 0, "w": 32, "h": 44 },
-    "sourceSize": { "w": 32, "h": 44 },
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 32, "h": 45 },
+    "sourceSize": { "w": 32, "h": 45 },
     "duration": 100
    },
    "bucket": {
-    "frame": { "x": 32, "y": 0, "w": 14, "h": 27 },
+    "frame": { "x": 32, "y": 44, "w": 23, "h": 42 },
     "rotated": false,
     "trimmed": true,
-    "spriteSourceSize": { "x": 5, "y": 4, "w": 14, "h": 27 },
-    "sourceSize": { "w": 32, "h": 44 },
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 23, "h": 42 },
+    "sourceSize": { "w": 32, "h": 45 },
     "duration": 100
    }
  },
@@ -21,10 +29,11 @@
   "version": "1.3-beta6-x64",
   "image": "sprites.png",
   "format": "I8",
-  "size": { "w": 46, "h": 44 },
+  "size": { "w": 64, "h": 86 },
   "scale": "1",
   "layers": [
-   { "name": "player", "opacity": 255, "blendMode": "normal" },
+   { "name": "player-right", "opacity": 255, "blendMode": "normal" },
+   { "name": "player-left", "opacity": 255, "blendMode": "normal" },
    { "name": "bucket", "opacity": 255, "blendMode": "normal" }
   ],
   "slices": [
