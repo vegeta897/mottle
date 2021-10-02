@@ -30,7 +30,6 @@ export class PixiApp {
 		this.application.view.id = 'viewport'
 		this.application.view.style.width = SCREEN_WIDTH * RENDER_SCALE + 'px'
 		this.application.view.style.height = SCREEN_HEIGHT * RENDER_SCALE + 'px'
-		this.application.view.style.imageRendering = 'pixelated'
 		document.body.appendChild(this.application.view)
 
 		// Create viewport
