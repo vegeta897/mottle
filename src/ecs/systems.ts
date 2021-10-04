@@ -3,7 +3,6 @@ import {
 	Changed,
 	defineQuery,
 	hasComponent,
-	Not,
 	removeComponent,
 	System,
 } from 'bitecs'
@@ -55,15 +54,14 @@ export const playerSystem: System = (world) => {
 		playerSprite.texture = playerLeft
 	}
 	const deltaMagnitude = Vector2.getMagnitude(delta)
-	if (deltaMagnitude < 12) {
+	if (deltaMagnitude < 20) {
 		removeComponent(world, Force, player)
 	} else {
-		const momentumFactor = clamp(Velocity.speed[player] / RUN_SPEED, 0.3, 1)
 		const force = Vector2.normalize(delta, deltaMagnitude, ACCELERATION)
 		addComponent(world, Force, player)
 		Force.maxSpeed[player] = RUN_SPEED
-		Force.x[player] = force.x * momentumFactor
-		Force.y[player] = force.y * momentumFactor
+		Force.x[player] = force.x
+		Force.y[player] = force.y
 	}
 	return world
 }
@@ -112,24 +110,12 @@ export const forceSystem: System = (world) => {
 				newVelocity,
 				Force.maxSpeed[eid] / newSpeed
 			)
+			Velocity.speed[eid] = Force.maxSpeed[eid]
+		} else {
+			Velocity.speed[eid] = newSpeed
 		}
 		Velocity.x[eid] = newVelocity.x
 		Velocity.y[eid] = newVelocity.y
-	}
-	return world
-}
-
-const MIN_SPEED = 0.3
-
-const dragQuery = defineQuery([Drag, Velocity, Not(Force)])
-
-export const dragSystem: System = (world) => {
-	for (let eid of dragQuery(world)) {
-		if (Velocity.x[eid] === 0 && Velocity.y[eid] === 0) continue
-		Velocity.x[eid] *= 1 - Drag.rate[eid]
-		Velocity.y[eid] *= 1 - Drag.rate[eid]
-		if (Math.abs(Velocity.x[eid]) < MIN_SPEED) Velocity.x[eid] = 0
-		if (Math.abs(Velocity.y[eid]) < MIN_SPEED) Velocity.y[eid] = 0
 	}
 	return world
 }
@@ -148,12 +134,27 @@ export const velocitySystem: System = (world) => {
 			Velocity.x[eid] = clamp(projected.x, 0, toNextPoint.x)
 			Velocity.y[eid] = clamp(projected.y, 0, toNextPoint.y)
 		}
-		Velocity.speed[eid] = Vector2.getMagnitude({
-			x: Velocity.x[eid],
-			y: Velocity.y[eid],
-		})
 		Transform.x[eid] += Velocity.x[eid]
 		Transform.y[eid] += Velocity.y[eid]
+	}
+	return world
+}
+
+const MIN_SPEED = 0.5
+
+const dragQuery = defineQuery([Drag, Velocity])
+
+export const dragSystem: System = (world) => {
+	for (let eid of dragQuery(world)) {
+		if (Velocity.speed[eid] === 0) continue
+		if (Velocity.speed[eid] < MIN_SPEED) {
+			Velocity.x[eid] = 0
+			Velocity.y[eid] = 0
+			Velocity.speed[eid] = 0
+		} else {
+			Velocity.x[eid] *= 1 - Drag.rate[eid]
+			Velocity.y[eid] *= 1 - Drag.rate[eid]
+		}
 	}
 	return world
 }
