@@ -5,6 +5,9 @@ import { Vector2 } from './util'
 
 const { viewport } = PixiApp.shared
 
+const MAX_LINE_POINTS = 24
+const LINE_POINT_DIST = 4
+
 const paintContainer: Container = new Container()
 viewport.addChildAt(paintContainer, 0)
 
@@ -17,13 +20,14 @@ export function paintLine(
 	newLine: boolean,
 	thickness: number
 ) {
-	if (newLine || currentLinePoints > 16 || !currentLine) {
+	if (newLine || currentLinePoints > MAX_LINE_POINTS || !currentLine) {
 		if (newLine || !currentLine) lastPoint = { x, y }
 		currentLine = new Graphics()
 		paintContainer.addChild(currentLine)
 		currentLinePoints = 0
 	} else if (
-		Vector2.getMagnitude({ x: x - lastPoint!.x, y: y - lastPoint!.y }) > 6
+		Vector2.getMagnitude({ x: x - lastPoint!.x, y: y - lastPoint!.y }) >
+		LINE_POINT_DIST
 	) {
 		currentLine.moveTo(lastPoint!.x, lastPoint!.y)
 		currentLine.lineStyle({

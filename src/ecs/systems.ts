@@ -19,7 +19,7 @@ import { clamp, transformsCollide, Vector2 } from '../util'
 import InputManager from '../input'
 import { PixiApp } from '../pixi/pixi_app'
 import { player, playerLeft, playerRight, playerSprite } from '../'
-import { PaintBucketStates } from '../level'
+import { getShapeAt, PaintBucketStates } from '../level'
 import Prando from 'prando'
 import { paintLine } from '../paint'
 
@@ -51,7 +51,7 @@ export const playerSystem: System = (world) => {
 		playerSprite.texture = playerLeft
 	}
 	const deltaMagnitude = Vector2.getMagnitude(delta)
-	if (deltaMagnitude < 12 /** PixiApp.shared.viewport.scaled*/) {
+	if (deltaMagnitude < 12) {
 		removeComponent(world, Force, player)
 	} else {
 		const momentumFactor = clamp(Velocity.speed[player] / 3, 0.3, 1)
@@ -115,6 +115,8 @@ export const forceSystem: System = (world) => {
 	return world
 }
 
+const MIN_SPEED = 0.3
+
 const dragQuery = defineQuery([Drag, Velocity, Not(Force)])
 
 export const dragSystem: System = (world) => {
@@ -122,8 +124,8 @@ export const dragSystem: System = (world) => {
 		if (Velocity.x[eid] === 0 && Velocity.y[eid] === 0) continue
 		Velocity.x[eid] *= 1 - Drag.rate[eid]
 		Velocity.y[eid] *= 1 - Drag.rate[eid]
-		if (Math.abs(Velocity.x[eid]) < 0.01) Velocity.x[eid] = 0
-		if (Math.abs(Velocity.y[eid]) < 0.01) Velocity.y[eid] = 0
+		if (Math.abs(Velocity.x[eid]) < MIN_SPEED) Velocity.x[eid] = 0
+		if (Math.abs(Velocity.y[eid]) < MIN_SPEED) Velocity.y[eid] = 0
 	}
 	return world
 }
@@ -173,7 +175,16 @@ export const collisionSystem: System = (world) => {
 	return world
 }
 
+export const shapeSystem: System = (world) => {
+	const shape = getShapeAt({ x: Transform.x[player], y: Transform.y[player] })
+	if (shape) {
+		console.log(shape)
+	}
+	return world
+}
+
 export const paintSystem: System = (world) => {
+	if (!Player.painting[player]) return world
 	if (Velocity.x[player] !== 0 || Velocity.y[player] !== 0) {
 		paintLine(playerSprite, Player.painting[player] === 1, 20)
 	}

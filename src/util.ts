@@ -6,6 +6,9 @@ export class Vector2 {
 	static getMagnitude({ x, y }: Vector2) {
 		return Math.sqrt(x ** 2 + y ** 2)
 	}
+	static getMagnitudeSquared({ x, y }: Vector2) {
+		return x ** 2 + y ** 2
+	}
 	static normalize({ x, y }: Vector2, magnitude?: number, scalar = 1) {
 		if (!magnitude) magnitude = Vector2.getMagnitude({ x, y })
 		return { x: (x / magnitude) * scalar, y: (y / magnitude) * scalar }
@@ -26,6 +29,12 @@ export class Vector2 {
 			x: x * Math.cos(radians) - y * Math.sin(radians),
 			y: x * Math.sin(radians) + y * Math.cos(radians),
 		}
+	}
+	static subtract(
+		{ x: x1, y: y1 }: Vector2,
+		{ x: x2, y: y2 }: Vector2
+	): Vector2 {
+		return { x: x2 - x1, y: y2 - y1 }
 	}
 }
 
