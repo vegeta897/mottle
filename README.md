@@ -1,8 +1,10 @@
-# 🐾Mottle
+# 🖌️Mottle
 
-- 🏃‍♀️ Run based
+- ~~🏃‍♀️ Run based~~
 - ⏱️ Fast paced
-- 🎲 Random generation
+- 🌊 All about flow
+- ~~🎲 Random generation~~
+- 🧩 Light puzzle elements
 - 💦 Juicy paint FX
-- 🔎 Dynamic camera zoom based on player speed and action
-- 🖼️ Final paint result image export/sharing
+- ~~🔎 Dynamic camera zoom based on player speed and action~~
+- ~~🖼️ Final paint result image export/sharing~~
