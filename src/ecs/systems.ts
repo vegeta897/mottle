@@ -2,6 +2,7 @@ import {
 	addComponent,
 	Changed,
 	defineQuery,
+	hasComponent,
 	Not,
 	removeComponent,
 	System,
@@ -10,6 +11,7 @@ import {
 	AreaConstraint,
 	Drag,
 	Force,
+	OnPath,
 	PaintBucket,
 	Player,
 	Transform,
@@ -176,9 +178,21 @@ export const collisionSystem: System = (world) => {
 }
 
 export const shapeSystem: System = (world) => {
+	if (hasComponent(world, OnPath, player)) return world
 	const shape = getShapeAt({ x: Transform.x[player], y: Transform.y[player] })
 	if (shape) {
-		console.log(shape)
+		Player.painting[player] = 1
+		Transform.x[player] = shape.points[0].x
+		Transform.y[player] = shape.points[0].y
+		Velocity.x[player] = 0
+		Velocity.y[player] = 0
+		Velocity.speed[player] = 0
+		removeComponent(world, Force, player)
+		addComponent(world, OnPath, player)
+		OnPath.fromX[player] = shape.points[0].x
+		OnPath.fromY[player] = shape.points[0].y
+		OnPath.toX[player] = shape.points[1].x
+		OnPath.toY[player] = shape.points[1].y
 	}
 	return world
 }
@@ -187,6 +201,7 @@ export const paintSystem: System = (world) => {
 	if (!Player.painting[player]) return world
 	if (Velocity.x[player] !== 0 || Velocity.y[player] !== 0) {
 		paintLine(playerSprite, Player.painting[player] === 1, 20)
+		Player.painting[player]++
 	}
 	return world
 }

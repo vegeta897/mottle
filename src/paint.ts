@@ -9,7 +9,7 @@ const MAX_LINE_POINTS = 24
 const LINE_POINT_DIST = 4
 
 const paintContainer: Container = new Container()
-viewport.addChildAt(paintContainer, 0)
+viewport.addChildAt(paintContainer, 1)
 
 let currentLine: Graphics | null = null
 let currentLinePoints = 0

@@ -35,3 +35,10 @@ export const PaintBucket = defineComponent({
 	state: Types.ui8,
 	stateTime: Types.ui32,
 })
+
+export const OnPath = defineComponent({
+	fromX: Types.f32,
+	fromY: Types.f32,
+	toX: Types.f32,
+	toY: Types.f32,
+})

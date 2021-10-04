@@ -22,16 +22,29 @@ type Shape = {
 
 const shapes: Shape[] = []
 
-function addShape({ x, y }: Vector2) {
-	shapes.push({ points: [{ x, y }] })
+function addShape(points: [number, number][]) {
+	const shape: Shape = { points: [] }
+	shapes.push(shape)
+	let nextX = 0
+	let nextY = 0
+	for (let [x, y] of points) {
+		nextX += x
+		nextY += y
+		shape.points.push({ x: nextX, y: nextY })
+	}
 	const startPointGraphic = new Graphics()
 	startPointGraphic.beginFill(0xffe0dc)
-	startPointGraphic.drawCircle(x, 0, NEAR)
+	startPointGraphic.drawCircle(points[0][0], 0, NEAR)
 	shapeContainer.addChild(startPointGraphic)
 }
 
 export function createLevel() {
-	addShape({ x: 80, y: 0 })
+	addShape([
+		[80, 0],
+		[40, -40],
+		[40, 40],
+		[-80, 0],
+	])
 }
 
 export function getShapeAt(position: Vector2) {

@@ -34,6 +34,7 @@ async function startGame() {
 
 	addComponent(game.world, Player, player)
 	Player.paint[player] = 200
+	Player.painting[player] = 0
 	addComponent(game.world, Transform, player)
 	Transform.x[player] = 0
 	Transform.y[player] = 0
