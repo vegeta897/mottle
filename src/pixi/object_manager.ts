@@ -5,9 +5,9 @@ import { PixiApp } from './pixi_app'
 export const DisplayObjects: DisplayObject[] = [] // Indexed by entity ID
 
 const splatContainer: Container = new Container()
-PixiApp.shared.viewport.addChildAt(splatContainer, 0)
+PixiApp.shared.stage.addChildAt(splatContainer, 0)
 
-const { worldHeight } = PixiApp.shared.viewport
+// const { height } = PixiApp.shared.application.view
 
 const axis = new Graphics()
 axis.lineStyle({ width: 1, color: 0xaa9944, alignment: 0 })
@@ -18,5 +18,4 @@ axis.lineTo(1, 24)
 axis.beginFill(0x775522)
 axis.lineStyle({ width: 0 })
 axis.drawRect(0, 0, 1, 1)
-axis.y = worldHeight / 2
 splatContainer.addChild(axis)

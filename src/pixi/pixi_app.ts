@@ -1,7 +1,7 @@
 import { Application, Container, Ticker } from 'pixi.js'
-import { Point } from '@pixi/math'
+// import { Point } from '@pixi/math'
 import * as PIXI from 'pixi.js'
-import { Viewport } from 'pixi-viewport'
+// import { Viewport } from 'pixi-viewport'
 
 //TODO: Use https://pixijs.io/customize/
 
@@ -21,7 +21,7 @@ export class PixiApp {
 	})
 	render = () => this.application.render()
 	stage: Container = this.application.stage
-	viewport: Viewport
+	// viewport: Viewport
 	spriteContainer: Container = new Container()
 
 	constructor() {
@@ -35,18 +35,20 @@ export class PixiApp {
 		this.application.view.style.height = SCREEN_HEIGHT * RENDER_SCALE + 'px'
 		document.body.appendChild(this.application.view)
 
-		// Create viewport
-		this.viewport = new Viewport({
-			screenWidth: this.application.view.width,
-			screenHeight: this.application.view.height,
-			// worldWidth: 4080,
-			// worldHeight: 264,
-			noTicker: true,
-		})
-		this.viewport.moveCenter(<Point>{ x: 0, y: 0 })
-		this.stage.addChild(this.viewport)
-
-		this.viewport.addChild(this.spriteContainer)
+		// // Create viewport
+		// this.viewport = new Viewport({
+		// 	screenWidth: this.application.view.width,
+		// 	screenHeight: this.application.view.height,
+		// 	// worldWidth: 4080,
+		// 	// worldHeight: 264,
+		// 	noTicker: true,
+		// })
+		// this.viewport.moveCenter(<Point>{ x: 0, y: 0 })
+		// this.stage.addChild(this.viewport)
+		//
+		this.stage.addChild(this.spriteContainer)
+		this.stage.x = SCREEN_WIDTH / 2
+		this.stage.y = SCREEN_HEIGHT / 2
 
 		// Pixi inspector
 		;(window as any).__PIXI_INSPECTOR_GLOBAL_HOOK__?.register({ PIXI: PIXI })
@@ -54,5 +56,8 @@ export class PixiApp {
 
 	static get shared() {
 		return PixiApp._shared
+	}
+	toLocal({ x, y }: { x: number; y: number }) {
+		return { x: x - this.stage.x, y: y - this.stage.y }
 	}
 }

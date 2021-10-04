@@ -3,13 +3,13 @@ import * as PIXI from 'pixi.js'
 import { PixiApp } from './pixi/pixi_app'
 import { Vector2 } from './util'
 
-const { viewport } = PixiApp.shared
+const { stage } = PixiApp.shared
 
 const MAX_LINE_POINTS = 24
 const LINE_POINT_DIST = 4
 
 const paintContainer: Container = new Container()
-viewport.addChildAt(paintContainer, 1)
+stage.addChildAt(paintContainer, 1)
 
 let currentLine: Graphics | null = null
 let currentLinePoints = 0
@@ -46,4 +46,4 @@ const SPLAT_SIZE = 6
 
 const floorPaintContainer: Container = new Container()
 floorPaintContainer.setTransform(SPLAT_SIZE / 2, SPLAT_SIZE / 2)
-viewport.addChildAt(floorPaintContainer, 0)
+stage.addChildAt(floorPaintContainer, 0)

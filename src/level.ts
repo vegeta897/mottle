@@ -2,10 +2,10 @@ import { PixiApp } from './pixi/pixi_app'
 import { Vector2 } from './util'
 import { Container, Graphics } from 'pixi.js'
 
-const { viewport } = PixiApp.shared
+const { stage } = PixiApp.shared
 
 const shapeContainer: Container = new Container()
-viewport.addChildAt(shapeContainer, 0)
+stage.addChildAt(shapeContainer, 0)
 
 export enum PaintBucketStates {
 	SLEEP,

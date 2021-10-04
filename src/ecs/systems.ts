@@ -31,7 +31,7 @@ const { mouse } = InputManager.shared
 
 export const inputSystem: System = (world) => {
 	mouse.global = mouse.data.global
-	mouse.local = PixiApp.shared.viewport.toLocal(mouse.global)
+	mouse.local = PixiApp.shared.toLocal(mouse.data.global)
 	mouse.leftButton = mouse.startedInBounds && !!(mouse.data.buttons & 1)
 	mouse.rightButton = mouse.startedInBounds && !!(mouse.data.buttons & 2)
 	return world

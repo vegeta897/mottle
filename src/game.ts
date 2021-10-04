@@ -37,7 +37,6 @@ export default class Game {
 			stats.begin()
 			this.deltaTime = lag / this.tickTime
 			this.ecs.renderPipeline(this.world)
-			PixiApp.shared.viewport.update(this.tickTime)
 			PixiApp.shared.render()
 			stats.end()
 		}

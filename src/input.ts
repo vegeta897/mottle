@@ -1,7 +1,7 @@
 import { InteractionEvent, Rectangle } from 'pixi.js'
 import { PixiApp } from './pixi/pixi_app'
 
-const { viewport, application } = PixiApp.shared
+const { application } = PixiApp.shared
 
 export default class InputManager {
 	static shared = new InputManager()
@@ -17,8 +17,8 @@ export default class InputManager {
 }
 
 const viewportRectangle = new Rectangle()
-viewportRectangle.width = viewport.screenWidth
-viewportRectangle.height = viewport.screenHeight
+viewportRectangle.width = application.view.width
+viewportRectangle.height = application.view.height
 
 const { mouse } = InputManager.shared
 
