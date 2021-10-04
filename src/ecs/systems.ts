@@ -37,7 +37,7 @@ export const inputSystem: System = (world) => {
 	return world
 }
 
-const RUN_SPEED = 3 // Pixels per tick
+const RUN_SPEED = 4 // Pixels per tick
 const ACCELERATION = 0.8
 
 export const playerSystem: System = (world) => {
@@ -58,7 +58,7 @@ export const playerSystem: System = (world) => {
 	if (deltaMagnitude < 12) {
 		removeComponent(world, Force, player)
 	} else {
-		const momentumFactor = clamp(Velocity.speed[player] / 3, 0.3, 1)
+		const momentumFactor = clamp(Velocity.speed[player] / RUN_SPEED, 0.3, 1)
 		const force = Vector2.normalize(delta, deltaMagnitude, ACCELERATION)
 		addComponent(world, Force, player)
 		Force.maxSpeed[player] = RUN_SPEED
@@ -145,8 +145,8 @@ export const velocitySystem: System = (world) => {
 			)
 			const velocityPoint = new Point(Velocity.x[eid], Velocity.y[eid])
 			const projected = velocityPoint.project(toNextPoint)
-			Velocity.x[eid] = projected.x
-			Velocity.y[eid] = projected.y
+			Velocity.x[eid] = clamp(projected.x, 0, toNextPoint.x)
+			Velocity.y[eid] = clamp(projected.y, 0, toNextPoint.y)
 		}
 		Velocity.speed[eid] = Vector2.getMagnitude({
 			x: Velocity.x[eid],
@@ -207,9 +207,6 @@ export const shapeSystem: System = (world) => {
 			} else {
 				Transform.x[player] = shape.points[OnPath.pointIndex[player]].x
 				Transform.y[player] = shape.points[OnPath.pointIndex[player]].y
-				Velocity.x[player] = 0
-				Velocity.y[player] = 0
-				Velocity.speed[player] = 0
 				OnPath.fromX[player] = shape.points[OnPath.pointIndex[player]].x
 				OnPath.fromY[player] = shape.points[OnPath.pointIndex[player]].y
 				OnPath.toX[player] = shape.points[OnPath.pointIndex[player] + 1].x
@@ -222,9 +219,6 @@ export const shapeSystem: System = (world) => {
 			Player.painting[player] = 1
 			Transform.x[player] = shape.points[0].x
 			Transform.y[player] = shape.points[0].y
-			Velocity.x[player] = 0
-			Velocity.y[player] = 0
-			Velocity.speed[player] = 0
 			removeComponent(world, Force, player)
 			addComponent(world, OnPath, player)
 			OnPath.shapeIndex[player] = shape.index
@@ -241,7 +235,11 @@ export const shapeSystem: System = (world) => {
 export const paintSystem: System = (world) => {
 	if (!Player.painting[player]) return world
 	if (Velocity.x[player] !== 0 || Velocity.y[player] !== 0) {
-		paintLine(playerSprite, Player.painting[player] === 1, 20)
+		paintLine(
+			{ x: Transform.x[player], y: Transform.y[player] },
+			Player.painting[player] === 1,
+			20
+		)
 		Player.painting[player]++
 	}
 	return world

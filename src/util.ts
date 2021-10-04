@@ -39,7 +39,8 @@ export class Vector2 {
 }
 
 export function clamp(val: number, min: number, max: number) {
-	return Math.max(min, Math.min(max, val))
+	if (min > max) return Math.max(max, Math.min(min, val))
+	else return Math.max(min, Math.min(max, val))
 }
 
 export function transformsCollide(eid1: number, eid2: number) {
