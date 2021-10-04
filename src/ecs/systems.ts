@@ -21,9 +21,11 @@ import { clamp, transformsCollide, Vector2 } from '../util'
 import InputManager from '../input'
 import { PixiApp } from '../pixi/pixi_app'
 import { player, playerLeft, playerRight, playerSprite } from '../'
-import { getShapeAt, PaintBucketStates } from '../level'
+import { getShapeAt, PaintBucketStates, shapes } from '../level'
 import Prando from 'prando'
 import { paintLine } from '../paint'
+import '@pixi/math-extras'
+import { Point } from '@pixi/math'
 
 const { mouse } = InputManager.shared
 
@@ -136,6 +138,16 @@ const velocityQuery = defineQuery([Transform, Velocity])
 
 export const velocitySystem: System = (world) => {
 	for (let eid of velocityQuery(world)) {
+		if (eid === player && hasComponent(world, OnPath, eid)) {
+			const toNextPoint = Vector2.subtract(
+				{ x: OnPath.toX[eid], y: OnPath.toY[eid] },
+				{ x: Transform.x[eid], y: Transform.y[eid] }
+			)
+			const velocityPoint = new Point(Velocity.x[eid], Velocity.y[eid])
+			const projected = velocityPoint.project(toNextPoint)
+			Velocity.x[eid] = projected.x
+			Velocity.y[eid] = projected.y
+		}
 		Velocity.speed[eid] = Vector2.getMagnitude({
 			x: Velocity.x[eid],
 			y: Velocity.y[eid],
@@ -178,21 +190,50 @@ export const collisionSystem: System = (world) => {
 }
 
 export const shapeSystem: System = (world) => {
-	if (hasComponent(world, OnPath, player)) return world
-	const shape = getShapeAt({ x: Transform.x[player], y: Transform.y[player] })
-	if (shape) {
-		Player.painting[player] = 1
-		Transform.x[player] = shape.points[0].x
-		Transform.y[player] = shape.points[0].y
-		Velocity.x[player] = 0
-		Velocity.y[player] = 0
-		Velocity.speed[player] = 0
-		removeComponent(world, Force, player)
-		addComponent(world, OnPath, player)
-		OnPath.fromX[player] = shape.points[0].x
-		OnPath.fromY[player] = shape.points[0].y
-		OnPath.toX[player] = shape.points[1].x
-		OnPath.toY[player] = shape.points[1].y
+	if (hasComponent(world, OnPath, player)) {
+		const nextPoint = new Point(OnPath.toX[player], OnPath.toY[player])
+		const pointFromPlayer = nextPoint.subtract({
+			x: Transform.x[player],
+			y: Transform.y[player],
+		})
+		if (pointFromPlayer.magnitudeSquared() < 4) {
+			OnPath.pointIndex[player]++
+			const shape = shapes[OnPath.shapeIndex[player]]
+			if (OnPath.pointIndex[player] + 1 === shape.points.length) {
+				// Shape complete
+				shape.complete = true
+				Player.painting[player] = 0
+				removeComponent(world, OnPath, player)
+			} else {
+				Transform.x[player] = shape.points[OnPath.pointIndex[player]].x
+				Transform.y[player] = shape.points[OnPath.pointIndex[player]].y
+				Velocity.x[player] = 0
+				Velocity.y[player] = 0
+				Velocity.speed[player] = 0
+				OnPath.fromX[player] = shape.points[OnPath.pointIndex[player]].x
+				OnPath.fromY[player] = shape.points[OnPath.pointIndex[player]].y
+				OnPath.toX[player] = shape.points[OnPath.pointIndex[player] + 1].x
+				OnPath.toY[player] = shape.points[OnPath.pointIndex[player] + 1].y
+			}
+		}
+	} else {
+		const shape = getShapeAt({ x: Transform.x[player], y: Transform.y[player] })
+		if (shape) {
+			Player.painting[player] = 1
+			Transform.x[player] = shape.points[0].x
+			Transform.y[player] = shape.points[0].y
+			Velocity.x[player] = 0
+			Velocity.y[player] = 0
+			Velocity.speed[player] = 0
+			removeComponent(world, Force, player)
+			addComponent(world, OnPath, player)
+			OnPath.shapeIndex[player] = shape.index
+			OnPath.pointIndex[player] = 0
+			OnPath.fromX[player] = shape.points[0].x
+			OnPath.fromY[player] = shape.points[0].y
+			OnPath.toX[player] = shape.points[1].x
+			OnPath.toY[player] = shape.points[1].y
+		}
 	}
 	return world
 }

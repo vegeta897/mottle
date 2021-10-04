@@ -1,6 +1,9 @@
-import { Application, Container, Point, Ticker } from 'pixi.js'
+import { Application, Container, Ticker } from 'pixi.js'
+import { Point } from '@pixi/math'
 import * as PIXI from 'pixi.js'
 import { Viewport } from 'pixi-viewport'
+
+//TODO: Use https://pixijs.io/customize/
 
 export const SCREEN_WIDTH = 600
 export const SCREEN_HEIGHT = 432

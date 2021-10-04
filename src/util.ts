@@ -1,4 +1,4 @@
-// TODO: Use @pixi/math and @pixi/math-extras
+// TODO: Use @pixi/math-extras
 
 import { Transform } from './ecs/components'
 
@@ -34,7 +34,7 @@ export class Vector2 {
 		{ x: x1, y: y1 }: Vector2,
 		{ x: x2, y: y2 }: Vector2
 	): Vector2 {
-		return { x: x2 - x1, y: y2 - y1 }
+		return { x: x1 - x2, y: y1 - y2 }
 	}
 }
 

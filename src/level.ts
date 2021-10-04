@@ -17,13 +17,15 @@ export enum PaintBucketStates {
 const NEAR = 16
 
 type Shape = {
+	index: number
 	points: Vector2[]
+	complete: boolean
 }
 
-const shapes: Shape[] = []
+export const shapes: Shape[] = []
 
 function addShape(points: [number, number][]) {
-	const shape: Shape = { points: [] }
+	const shape: Shape = { index: shapes.length, points: [], complete: false }
 	shapes.push(shape)
 	let nextX = 0
 	let nextY = 0
@@ -34,26 +36,27 @@ function addShape(points: [number, number][]) {
 	}
 	const startPointGraphic = new Graphics()
 	startPointGraphic.beginFill(0xffe0dc)
-	startPointGraphic.drawCircle(points[0][0], 0, NEAR)
+	startPointGraphic.drawCircle(points[0][0], points[0][1], NEAR)
 	shapeContainer.addChild(startPointGraphic)
 }
 
 export function createLevel() {
 	addShape([
-		[80, 0],
-		[40, -40],
-		[40, 40],
-		[-80, 0],
+		[80, -20],
+		[60, -120],
+		[60, 120],
+		[-120, 0],
 	])
 }
 
 export function getShapeAt(position: Vector2) {
 	for (let shape of shapes) {
 		if (
+			!shape.complete &&
 			Vector2.getMagnitudeSquared(
 				Vector2.subtract(position, shape.points[0])
 			) <=
-			NEAR ** 2
+				NEAR ** 2
 		) {
 			return shape
 		}

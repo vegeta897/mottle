@@ -37,6 +37,8 @@ export const PaintBucket = defineComponent({
 })
 
 export const OnPath = defineComponent({
+	shapeIndex: Types.ui32,
+	pointIndex: Types.ui32,
 	fromX: Types.f32,
 	fromY: Types.f32,
 	toX: Types.f32,
