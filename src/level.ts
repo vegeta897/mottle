@@ -24,9 +24,19 @@ type Shape = {
 	complete: boolean
 }
 
+class AngledPoint {
+	constructor(public degrees: number, public distance: number) {}
+}
+
+class XYPoint {
+	constructor(public x: number, public y: number) {}
+}
+
+type PointLocation = AngledPoint | XYPoint
+
 export const shapes: Shape[] = []
 
-function addShape(x: number, y: number, points: [number, number][]) {
+function addShape(x: number, y: number, points: PointLocation[]) {
 	const shape: Shape = {
 		index: shapes.length,
 		points: [],
@@ -43,9 +53,14 @@ function addShape(x: number, y: number, points: [number, number][]) {
 	linesGraphic.moveTo(x, y)
 	let nextX = x
 	let nextY = y
-	for (let [x, y] of points) {
-		nextX += x
-		nextY += y
+	for (let point of points) {
+		if (point instanceof XYPoint) {
+			nextX += point.x
+			nextY += point.y
+		} else {
+			nextX += point.distance * Math.cos((point.degrees * Math.PI) / 180)
+			nextY += point.distance * Math.sin((point.degrees * Math.PI) / 180)
+		}
 		linesGraphic.lineTo(nextX, nextY)
 		pointsGraphic.drawCircle(nextX, nextY, 6)
 		shape.points.push({ x: nextX, y: nextY })
@@ -57,25 +72,25 @@ function addShape(x: number, y: number, points: [number, number][]) {
 export function createLevel() {
 	// Triangle
 	addShape(80, -20, [
-		[60, -120],
-		[60, 120],
-		[-120, 0],
+		new XYPoint(60, -120),
+		new XYPoint(60, 120),
+		new XYPoint(-120, 0),
 	])
 	// Square
 	addShape(-80, -20, [
-		[-100, 0],
-		[0, -100],
-		[100, 0],
-		[0, 100],
+		new XYPoint(-100, 0),
+		new XYPoint(0, -100),
+		new XYPoint(100, 0),
+		new XYPoint(0, 100),
 	])
 	// Star
-	// TODO: Add angle/distance based shape drawing method
-	addShape(-60, 80, [
-		[130, 100],
-		[-60, -150],
-		[-60, 150],
-		[120, -100],
-		[-120, 0],
+	const starSize = 180
+	addShape(0, 80, [
+		new AngledPoint(36, starSize),
+		new AngledPoint(-108, starSize),
+		new AngledPoint(108, starSize),
+		new AngledPoint(-36, starSize),
+		new AngledPoint(-180, starSize),
 	])
 }
 
