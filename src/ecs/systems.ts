@@ -222,16 +222,16 @@ export const shapeSystem: System = (world) => {
 		const shape = getShapeAt({ x: Transform.x[player], y: Transform.y[player] })
 		if (shape) {
 			Player.painting[player] = 1
-			Transform.x[player] = shape.points[0].x
-			Transform.y[player] = shape.points[0].y
+			Transform.x[player] = shape.x
+			Transform.y[player] = shape.y
 			removeComponent(world, Force, player)
 			addComponent(world, OnPath, player)
 			OnPath.shapeIndex[player] = shape.index
-			OnPath.pointIndex[player] = 0
-			OnPath.fromX[player] = shape.points[0].x
-			OnPath.fromY[player] = shape.points[0].y
-			OnPath.toX[player] = shape.points[1].x
-			OnPath.toY[player] = shape.points[1].y
+			OnPath.pointIndex[player] = -1
+			OnPath.fromX[player] = shape.x
+			OnPath.fromY[player] = shape.y
+			OnPath.toX[player] = shape.points[0].x
+			OnPath.toY[player] = shape.points[0].y
 			OnPath.segmentLength[player] = Vector2.getMagnitude({
 				x: OnPath.toX[player] - OnPath.fromX[player],
 				y: OnPath.toY[player] - OnPath.fromY[player],

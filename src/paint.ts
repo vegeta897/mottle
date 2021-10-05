@@ -5,14 +5,12 @@ import { Vector2 } from './util'
 
 const { stage } = PixiApp.shared
 
-const MAX_LINE_POINTS = 24
 const LINE_POINT_DIST = 4
 
 const paintContainer: Container = new Container()
 stage.addChildAt(paintContainer, 1)
 
 let currentLine: Graphics | null = null
-let currentLinePoints = 0
 let lastPoint: Vector2 | null = null
 
 export function paintLine(
@@ -20,11 +18,10 @@ export function paintLine(
 	newLine: boolean,
 	thickness: number
 ) {
-	if (newLine || currentLinePoints > MAX_LINE_POINTS || !currentLine) {
+	if (newLine || !currentLine) {
 		if (newLine || !currentLine) lastPoint = { x, y }
 		currentLine = new Graphics()
 		paintContainer.addChild(currentLine)
-		currentLinePoints = 0
 	} else if (
 		Vector2.getMagnitude({ x: x - lastPoint!.x, y: y - lastPoint!.y }) >
 		LINE_POINT_DIST
@@ -37,7 +34,6 @@ export function paintLine(
 			join: PIXI.LINE_JOIN.ROUND,
 		})
 		currentLine.lineTo(x, y)
-		currentLinePoints++
 		lastPoint = { x, y }
 	}
 }
