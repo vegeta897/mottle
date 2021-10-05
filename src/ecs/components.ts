@@ -36,6 +36,7 @@ export const PaintBucket = defineComponent({
 	stateTime: Types.ui32,
 })
 
+// TODO: Make this a singleton, it doesn't need to be a component
 export const OnPath = defineComponent({
 	shapeIndex: Types.ui32,
 	pointIndex: Types.ui32,
@@ -43,4 +44,5 @@ export const OnPath = defineComponent({
 	fromY: Types.f32,
 	toX: Types.f32,
 	toY: Types.f32,
+	segmentLength: Types.f32,
 })

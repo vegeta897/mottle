@@ -212,6 +212,10 @@ export const shapeSystem: System = (world) => {
 				OnPath.fromY[player] = shape.points[OnPath.pointIndex[player]].y
 				OnPath.toX[player] = shape.points[OnPath.pointIndex[player] + 1].x
 				OnPath.toY[player] = shape.points[OnPath.pointIndex[player] + 1].y
+				OnPath.segmentLength[player] = Vector2.getMagnitude({
+					x: OnPath.toX[player] - OnPath.fromX[player],
+					y: OnPath.toY[player] - OnPath.fromY[player],
+				})
 			}
 		}
 	} else {
@@ -228,6 +232,10 @@ export const shapeSystem: System = (world) => {
 			OnPath.fromY[player] = shape.points[0].y
 			OnPath.toX[player] = shape.points[1].x
 			OnPath.toY[player] = shape.points[1].y
+			OnPath.segmentLength[player] = Vector2.getMagnitude({
+				x: OnPath.toX[player] - OnPath.fromX[player],
+				y: OnPath.toY[player] - OnPath.fromY[player],
+			})
 		}
 	}
 	return world
