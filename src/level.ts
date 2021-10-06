@@ -21,7 +21,7 @@ type Shape = {
 	index: number
 	x: number
 	y: number
-	points: Vector2[]
+	segments: { start: Vector2; end: Vector2; length: number }[]
 	complete: boolean
 }
 
@@ -40,7 +40,7 @@ export const shapes: Shape[] = []
 function addShape(x: number, y: number, points: PointLocation[]) {
 	const shape: Shape = {
 		index: shapes.length,
-		points: [],
+		segments: [],
 		complete: false,
 		x,
 		y,
@@ -55,6 +55,7 @@ function addShape(x: number, y: number, points: PointLocation[]) {
 	let nextX = x
 	let nextY = y
 	for (let point of points) {
+		const start = { x: nextX, y: nextY }
 		if (point instanceof XYPoint) {
 			nextX += point.x
 			nextY += point.y
@@ -64,7 +65,12 @@ function addShape(x: number, y: number, points: PointLocation[]) {
 		}
 		linesGraphic.lineTo(nextX, nextY)
 		pointsGraphic.drawCircle(nextX, nextY, 6)
-		shape.points.push({ x: nextX, y: nextY })
+		const end = { x: nextX, y: nextY }
+		shape.segments.push({
+			start,
+			end,
+			length: Vector2.getMagnitude(Vector2.subtract(end, start)),
+		})
 	}
 	shapeContainer.addChild(pointsGraphic)
 	shapeContainer.addChild(linesGraphic)

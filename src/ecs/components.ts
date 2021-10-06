@@ -5,10 +5,7 @@ const Vector2 = {
 	y: Types.f32,
 }
 
-export const Player = defineComponent({
-	painting: Types.ui32,
-	paint: Types.ui16,
-})
+export const Player = defineComponent({ painting: Types.ui32 })
 
 export const Transform = defineComponent({
 	...Vector2,
@@ -37,12 +34,13 @@ export const PaintBucket = defineComponent({
 })
 
 // TODO: Make this a singleton, it doesn't need to be a component
+// Same for Player too probably
 export const OnPath = defineComponent({
 	shapeIndex: Types.ui32,
-	pointIndex: Types.ui32,
-	fromX: Types.f32,
-	fromY: Types.f32,
-	toX: Types.f32,
-	toY: Types.f32,
+	segmentIndex: Types.ui32,
+	startX: Types.f32,
+	startY: Types.f32,
+	endX: Types.f32,
+	endY: Types.f32,
 	segmentLength: Types.f32,
 })

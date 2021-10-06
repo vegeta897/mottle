@@ -16,7 +16,7 @@ import {
 	Transform,
 	Velocity,
 } from './components'
-import { clamp, transformsCollide, Vector2 } from '../util'
+import { clamp, Vector2 } from '../util'
 import InputManager from '../input'
 import { PixiApp } from '../pixi/pixi_app'
 import { player, playerLeft, playerRight, playerSprite } from '../'
@@ -118,7 +118,7 @@ export const velocitySystem: System = (world) => {
 	for (let eid of velocityQuery(world)) {
 		if (eid === player && hasComponent(world, OnPath, eid)) {
 			const toNextPoint = Vector2.subtract(
-				{ x: OnPath.toX[eid], y: OnPath.toY[eid] },
+				{ x: OnPath.endX[eid], y: OnPath.endY[eid] },
 				{ x: Transform.x[eid], y: Transform.y[eid] }
 			)
 			const velocityPoint = new Point(Velocity.x[eid], Velocity.y[eid])
@@ -177,46 +177,37 @@ export const areaConstraintSystem: System = (world) => {
 	return world
 }
 
-export const collisionSystem: System = (world) => {
-	if (Velocity.speed[player] < 3) return world
-	for (let eid of paintBucketQuery(world)) {
-		if (
-			PaintBucket.state[eid] !== PaintBucketStates.SPILL &&
-			transformsCollide(player, eid)
-		) {
-			Player.paint[player] += 75
-		}
-	}
-	return world
+function setSegment(shape: typeof shapes[number]) {
+	const segment = shape.segments[OnPath.segmentIndex[player]]
+	Transform.x[player] = segment.start.x
+	Transform.y[player] = segment.start.y
+	OnPath.startX[player] = segment.start.x
+	OnPath.startY[player] = segment.start.y
+	OnPath.endX[player] = segment.end.x
+	OnPath.endY[player] = segment.end.y
+	OnPath.segmentLength[player] = segment.length
 }
 
 export const shapeSystem: System = (world) => {
 	if (hasComponent(world, OnPath, player)) {
-		const nextPoint = new Point(OnPath.toX[player], OnPath.toY[player])
+		// Replace this with length travelled check
+		const nextPoint = new Point(OnPath.endX[player], OnPath.endY[player])
 		const pointFromPlayer = nextPoint.subtract({
 			x: Transform.x[player],
 			y: Transform.y[player],
 		})
 		if (pointFromPlayer.magnitudeSquared() < 4) {
-			OnPath.pointIndex[player]++
+			OnPath.segmentIndex[player]++
 			const shape = shapes[OnPath.shapeIndex[player]]
-			if (OnPath.pointIndex[player] + 1 === shape.points.length) {
+			if (OnPath.segmentIndex[player] === shape.segments.length) {
 				// Shape complete
 				shape.complete = true
+				paintLine({ x: OnPath.endX[player], y: OnPath.endY[player] }, false, 20)
 				Player.painting[player] = 0
 				Drag.rate[player] = 0.2
 				removeComponent(world, OnPath, player)
 			} else {
-				Transform.x[player] = shape.points[OnPath.pointIndex[player]].x
-				Transform.y[player] = shape.points[OnPath.pointIndex[player]].y
-				OnPath.fromX[player] = shape.points[OnPath.pointIndex[player]].x
-				OnPath.fromY[player] = shape.points[OnPath.pointIndex[player]].y
-				OnPath.toX[player] = shape.points[OnPath.pointIndex[player] + 1].x
-				OnPath.toY[player] = shape.points[OnPath.pointIndex[player] + 1].y
-				OnPath.segmentLength[player] = Vector2.getMagnitude({
-					x: OnPath.toX[player] - OnPath.fromX[player],
-					y: OnPath.toY[player] - OnPath.fromY[player],
-				})
+				setSegment(shape)
 			}
 		}
 	} else {
@@ -224,28 +215,13 @@ export const shapeSystem: System = (world) => {
 		if (shape) {
 			Player.painting[player] = 1
 			Drag.rate[player] = 0.1
-			Transform.x[player] = shape.x
-			Transform.y[player] = shape.y
-			removeComponent(world, Force, player)
 			addComponent(world, OnPath, player)
 			OnPath.shapeIndex[player] = shape.index
-			OnPath.pointIndex[player] = -1
-			OnPath.fromX[player] = shape.x
-			OnPath.fromY[player] = shape.y
-			OnPath.toX[player] = shape.points[0].x
-			OnPath.toY[player] = shape.points[0].y
-			OnPath.segmentLength[player] = Vector2.getMagnitude({
-				x: OnPath.toX[player] - OnPath.fromX[player],
-				y: OnPath.toY[player] - OnPath.fromY[player],
-			})
+			OnPath.segmentIndex[player] = 0
+			setSegment(shape)
 		}
 	}
-	return world
-}
-
-export const paintSystem: System = (world) => {
-	if (!Player.painting[player]) return world
-	if (Velocity.x[player] !== 0 || Velocity.y[player] !== 0) {
+	if (Player.painting[player] > 0) {
 		paintLine(
 			{ x: Transform.x[player], y: Transform.y[player] },
 			Player.painting[player] === 1,
