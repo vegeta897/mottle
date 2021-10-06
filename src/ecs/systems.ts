@@ -59,9 +59,9 @@ export const playerSystem: System = (world) => {
 	} else {
 		const force = Vector2.normalize(delta, deltaMagnitude, ACCELERATION)
 		addComponent(world, Force, player)
-		Force.maxSpeed[player] = RUN_SPEED
-		Force.x[player] = force.x
-		Force.y[player] = force.y
+		Force.maxSpeed[player] = RUN_SPEED + Player.painting[player] / 20
+		Force.x[player] = force.x /** (1 + Player.painting[player] / 50)*/
+		Force.y[player] = force.y /** (1 + Player.painting[player] / 50)*/
 	}
 	return world
 }
@@ -104,16 +104,16 @@ export const forceSystem: System = (world) => {
 			x: Velocity.x[eid] + Force.x[eid],
 			y: Velocity.y[eid] + Force.y[eid],
 		}
-		const newSpeed = Vector2.getMagnitude(newVelocity)
-		if (newSpeed > Force.maxSpeed[eid]) {
+		let newSpeed = Vector2.getMagnitude(newVelocity)
+		// Speed increased and exceeds max
+		if (newSpeed > Velocity.speed[eid] && newSpeed > Force.maxSpeed[eid]) {
+			newSpeed = Force.maxSpeed[eid]
 			newVelocity = Vector2.multiply(
 				newVelocity,
 				Force.maxSpeed[eid] / newSpeed
 			)
-			Velocity.speed[eid] = Force.maxSpeed[eid]
-		} else {
-			Velocity.speed[eid] = newSpeed
 		}
+		Velocity.speed[eid] = newSpeed
 		Velocity.x[eid] = newVelocity.x
 		Velocity.y[eid] = newVelocity.y
 	}
@@ -204,6 +204,7 @@ export const shapeSystem: System = (world) => {
 				// Shape complete
 				shape.complete = true
 				Player.painting[player] = 0
+				Drag.rate[player] = 0.15
 				removeComponent(world, OnPath, player)
 			} else {
 				Transform.x[player] = shape.points[OnPath.pointIndex[player]].x
@@ -222,6 +223,7 @@ export const shapeSystem: System = (world) => {
 		const shape = getShapeAt({ x: Transform.x[player], y: Transform.y[player] })
 		if (shape) {
 			Player.painting[player] = 1
+			Drag.rate[player] = 0.05
 			Transform.x[player] = shape.x
 			Transform.y[player] = shape.y
 			removeComponent(world, Force, player)

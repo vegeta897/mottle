@@ -1,6 +1,7 @@
 import { PixiApp } from './pixi/pixi_app'
 import { Vector2 } from './util'
 import { Container, Graphics } from 'pixi.js'
+import { DEG_TO_RAD } from '@pixi/math'
 
 const { stage } = PixiApp.shared
 
@@ -58,8 +59,8 @@ function addShape(x: number, y: number, points: PointLocation[]) {
 			nextX += point.x
 			nextY += point.y
 		} else {
-			nextX += point.distance * Math.cos((point.degrees * Math.PI) / 180)
-			nextY += point.distance * Math.sin((point.degrees * Math.PI) / 180)
+			nextX += point.distance * Math.cos(point.degrees * DEG_TO_RAD)
+			nextY += point.distance * Math.sin(point.degrees * DEG_TO_RAD)
 		}
 		linesGraphic.lineTo(nextX, nextY)
 		pointsGraphic.drawCircle(nextX, nextY, 6)
