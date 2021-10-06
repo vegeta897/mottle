@@ -18,7 +18,7 @@ export const Transform = defineComponent({
 
 export const Velocity = defineComponent({ ...Vector2, speed: Types.f32 })
 
-export const Force = defineComponent({ ...Vector2, maxSpeed: Types.f32 })
+export const Force = defineComponent(Vector2)
 
 export const Drag = defineComponent({ rate: Types.f32 })
 

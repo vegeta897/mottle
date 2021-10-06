@@ -36,8 +36,7 @@ export const inputSystem: System = (world) => {
 	return world
 }
 
-const RUN_SPEED = 4 // Pixels per tick
-const ACCELERATION = 0.8
+const ACCELERATION = 1
 
 export const playerSystem: System = (world) => {
 	if (!mouse.leftButton) {
@@ -54,14 +53,17 @@ export const playerSystem: System = (world) => {
 		playerSprite.texture = playerLeft
 	}
 	const deltaMagnitude = Vector2.getMagnitude(delta)
-	if (deltaMagnitude < 20) {
+	if (deltaMagnitude < 16) {
 		removeComponent(world, Force, player)
 	} else {
-		const force = Vector2.normalize(delta, deltaMagnitude, ACCELERATION)
+		const force = Vector2.normalize(
+			delta,
+			deltaMagnitude,
+			ACCELERATION * Math.min(1, (deltaMagnitude - 12) / 32)
+		)
 		addComponent(world, Force, player)
-		Force.maxSpeed[player] = RUN_SPEED + Player.painting[player] / 20
-		Force.x[player] = force.x /** (1 + Player.painting[player] / 50)*/
-		Force.y[player] = force.y /** (1 + Player.painting[player] / 50)*/
+		Force.x[player] = force.x
+		Force.y[player] = force.y
 	}
 	return world
 }
@@ -80,7 +82,6 @@ export const paintBucketSystem: System = (world) => {
 			PaintBucket.state[eid] = PaintBucketStates.WALK
 			PaintBucket.stateTime[eid] = 0
 			addComponent(world, Force, eid)
-			Force.maxSpeed[eid] = 0.7
 			Force.x[eid] = (rng.nextBoolean() ? 1 : -1) * 0.1
 			Force.y[eid] = (rng.nextBoolean() ? 1 : -1) * 0.1
 		} else if (
@@ -104,16 +105,7 @@ export const forceSystem: System = (world) => {
 			x: Velocity.x[eid] + Force.x[eid],
 			y: Velocity.y[eid] + Force.y[eid],
 		}
-		let newSpeed = Vector2.getMagnitude(newVelocity)
-		// Speed increased and exceeds max
-		if (newSpeed > Velocity.speed[eid] && newSpeed > Force.maxSpeed[eid]) {
-			newSpeed = Force.maxSpeed[eid]
-			newVelocity = Vector2.multiply(
-				newVelocity,
-				Force.maxSpeed[eid] / newSpeed
-			)
-		}
-		Velocity.speed[eid] = newSpeed
+		Velocity.speed[eid] = Vector2.getMagnitude(newVelocity)
 		Velocity.x[eid] = newVelocity.x
 		Velocity.y[eid] = newVelocity.y
 	}
@@ -133,6 +125,10 @@ export const velocitySystem: System = (world) => {
 			const projected = velocityPoint.project(toNextPoint)
 			Velocity.x[eid] = clamp(projected.x, 0, toNextPoint.x)
 			Velocity.y[eid] = clamp(projected.y, 0, toNextPoint.y)
+			Velocity.speed[eid] = Vector2.getMagnitude({
+				x: Velocity.x[eid],
+				y: Velocity.y[eid],
+			})
 		}
 		Transform.x[eid] += Velocity.x[eid]
 		Transform.y[eid] += Velocity.y[eid]
@@ -140,7 +136,7 @@ export const velocitySystem: System = (world) => {
 	return world
 }
 
-const MIN_SPEED = 0.5
+const MIN_SPEED = 0.2
 
 const dragQuery = defineQuery([Drag, Velocity])
 
@@ -154,6 +150,10 @@ export const dragSystem: System = (world) => {
 		} else {
 			Velocity.x[eid] *= 1 - Drag.rate[eid]
 			Velocity.y[eid] *= 1 - Drag.rate[eid]
+			Velocity.speed[eid] = Vector2.getMagnitude({
+				x: Velocity.x[eid],
+				y: Velocity.y[eid],
+			})
 		}
 	}
 	return world
@@ -204,7 +204,7 @@ export const shapeSystem: System = (world) => {
 				// Shape complete
 				shape.complete = true
 				Player.painting[player] = 0
-				Drag.rate[player] = 0.15
+				Drag.rate[player] = 0.2
 				removeComponent(world, OnPath, player)
 			} else {
 				Transform.x[player] = shape.points[OnPath.pointIndex[player]].x
@@ -223,7 +223,7 @@ export const shapeSystem: System = (world) => {
 		const shape = getShapeAt({ x: Transform.x[player], y: Transform.y[player] })
 		if (shape) {
 			Player.painting[player] = 1
-			Drag.rate[player] = 0.05
+			Drag.rate[player] = 0.1
 			Transform.x[player] = shape.x
 			Transform.y[player] = shape.y
 			removeComponent(world, Force, player)

@@ -42,7 +42,7 @@ async function startGame() {
 	Transform.height[player] = 24
 	addComponent(game.world, Velocity, player)
 	addComponent(game.world, Drag, player)
-	Drag.rate[player] = 0.15
+	Drag.rate[player] = 0.2
 	// addComponent(game.world, AreaConstraint, player)
 	// AreaConstraint.top[player] = 12
 	// AreaConstraint.left[player] = -12
