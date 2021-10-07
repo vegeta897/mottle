@@ -1,6 +1,6 @@
 import { PixiApp } from './pixi/pixi_app'
-import { Vector2 } from './util'
-import { Container, Graphics, PI_2 } from 'pixi.js'
+import { Angle, Vector2 } from './util'
+import { Container, Graphics } from 'pixi.js'
 import { DEG_TO_RAD } from '@pixi/math'
 
 const { stage } = PixiApp.shared
@@ -9,7 +9,14 @@ const shapeContainer: Container = new Container()
 stage.addChildAt(shapeContainer, 0)
 
 const MAX_DIST = 20
-const MAX_ANGLE = 20
+const MAX_ANGLE = 20 * DEG_TO_RAD
+
+enum SEGMENT_DIR {
+	NONE,
+	START_TO_END,
+	END_TO_START,
+	BIDIRECTIONAL,
+}
 
 type Segment = {
 	start: Vector2
@@ -17,16 +24,19 @@ type Segment = {
 	length: number
 	angle: number
 	complete: boolean
+	direction: SEGMENT_DIR
 	next?: Segment
 	previous?: Segment
 }
 
 type Shape = {
 	index: number
-	x: number
-	y: number
 	segments: Segment[]
+	startingSegments: Segment[]
+	start: Vector2
+	reverse: boolean
 	complete: boolean
+	contiguous: boolean
 }
 
 class AngledPoint {
@@ -55,14 +65,18 @@ function addShape(
 	const shape: Shape = {
 		index: shapes.length,
 		segments: [],
+		startingSegments: [],
+		reverse: false,
 		complete: false,
-		x,
-		y,
+		contiguous: options.contiguous,
+		start: { x, y },
 	}
 	shapes.push(shape)
 	const pointsGraphic = new Graphics()
-	pointsGraphic.beginFill(0xffe0dc)
+	pointsGraphic.lineStyle(2, 0xffe0dc)
 	pointsGraphic.drawCircle(x, y, MAX_DIST)
+	pointsGraphic.lineStyle(0)
+	pointsGraphic.beginFill(0xffe0dc)
 	const linesGraphic = new Graphics()
 	linesGraphic.lineStyle(2, 0xffe0dc)
 	linesGraphic.moveTo(x, y)
@@ -73,7 +87,7 @@ function addShape(
 	for (let point of points) {
 		const start = { x: nextX, y: nextY }
 		if (point instanceof XYPoint) {
-			angle = Math.atan2(point.y, point.x)
+			angle = Angle.fromVector(point)
 			nextX += point.x
 			nextY += point.y
 		} else {
@@ -88,19 +102,37 @@ function addShape(
 			start,
 			end,
 			angle,
+			direction: options.contiguous
+				? SEGMENT_DIR.BIDIRECTIONAL
+				: SEGMENT_DIR.NONE,
 			complete: false,
 			length: Vector2.getMagnitude(Vector2.subtract(end, start)),
 		}
 		if (previousSegment) {
 			segment.previous = previousSegment
 			previousSegment.next = segment
+		} else if (segment.direction === SEGMENT_DIR.NONE) {
+			segment.direction = SEGMENT_DIR.START_TO_END
 		}
 		shape.segments.push(segment)
+		if (
+			options.contiguous ||
+			!previousSegment ||
+			shape.segments.length === points.length
+		) {
+			shape.startingSegments.push(segment)
+		}
+		if (
+			shape.segments.length === points.length &&
+			segment.direction === SEGMENT_DIR.NONE
+		) {
+			segment.direction = SEGMENT_DIR.END_TO_START
+		}
 		previousSegment = segment
 	}
 	if (options.contiguous) {
-		shape.segments[0].previous = shape.segments[shape.segments.length - 1]
-		shape.segments[shape.segments.length - 1].next = shape.segments[0]
+		shape.segments[0].previous = previousSegment!
+		previousSegment!.next = shape.segments[0]
 	}
 	shapeContainer.addChild(pointsGraphic)
 	shapeContainer.addChild(linesGraphic)
@@ -122,27 +154,67 @@ export function createLevel() {
 	])
 	// Star
 	const starSize = 180
-	addShape(0, 80, [
+	addShape(80, 80, [
 		new AngledPoint(36, starSize),
 		new AngledPoint(-108, starSize),
 		new AngledPoint(108, starSize),
 		new AngledPoint(-36, starSize),
 		new AngledPoint(-180, starSize),
 	])
+	// Zig-zag
+	const zigLength = 50
+	addShape(
+		-20,
+		80,
+		[
+			new XYPoint(-zigLength, zigLength),
+			new XYPoint(-zigLength, -zigLength),
+			new XYPoint(-zigLength, zigLength),
+			new XYPoint(-zigLength, -zigLength),
+		],
+		{ contiguous: false }
+	)
 }
 
 export function getShapeAt(position: Vector2, velocity: Vector2) {
-	const velocityAngle = Math.atan2(velocity.y, velocity.x)
-	for (let shape of shapes) {
-		if (
-			!shape.complete &&
-			Math.abs(shape.segments[0].angle - velocityAngle) % PI_2 <
-				MAX_ANGLE * DEG_TO_RAD &&
-			Vector2.getMagnitudeSquared(Vector2.subtract(position, shape)) <=
-				MAX_DIST ** 2
-		) {
-			return shape
+	const velocityAngle = Angle.fromVector(velocity)
+	for (let shape of shapes.filter((s) => !s.complete)) {
+		for (let segment of shape.startingSegments) {
+			let direction = SEGMENT_DIR.NONE
+			const start = { x: 0, y: 0 }
+			if (
+				[SEGMENT_DIR.START_TO_END, SEGMENT_DIR.BIDIRECTIONAL].includes(
+					segment.direction
+				) &&
+				Angle.diff(segment.angle, velocityAngle) < MAX_ANGLE &&
+				Vector2.getMagnitudeSquared(
+					Vector2.subtract(position, segment.start)
+				) <=
+					MAX_DIST ** 2
+			) {
+				direction = SEGMENT_DIR.START_TO_END
+				start.x = segment.start.x
+				start.y = segment.start.y
+			} else if (
+				[SEGMENT_DIR.END_TO_START, SEGMENT_DIR.BIDIRECTIONAL].includes(
+					segment.direction
+				) &&
+				Angle.diff(Angle.flip(segment.angle), velocityAngle) < MAX_ANGLE &&
+				Vector2.getMagnitudeSquared(Vector2.subtract(position, segment.end)) <=
+					MAX_DIST ** 2
+			) {
+				direction = SEGMENT_DIR.END_TO_START
+				start.x = segment.end.x
+				start.y = segment.end.y
+			}
+			if (direction !== SEGMENT_DIR.NONE) {
+				shape.reverse = direction === SEGMENT_DIR.END_TO_START
+				shape.start = start
+				Level.shape = shape
+				Level.segment = segment
+				return true
+			}
 		}
 	}
-	return null
+	return false
 }

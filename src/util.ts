@@ -1,6 +1,7 @@
 // TODO: Use @pixi/math-extras
 
 import { Transform } from './ecs/components'
+import { PI_2 } from 'pixi.js'
 
 export class Vector2 {
 	static getMagnitude({ x, y }: Vector2) {
@@ -67,6 +68,21 @@ export function aabbCollide(
 	h2: number
 ) {
 	return x1 < x2 + w2 && x1 + w1 > x2 && y1 < y2 + h2 && y1 + h1 > y2
+}
+
+export class Angle {
+	static add(a: number, b: number) {
+		return (a + b) % PI_2
+	}
+	static flip(a: number) {
+		return (a + Math.PI) % PI_2
+	}
+	static diff(a: number, b: number) {
+		return Math.abs(b - a) % PI_2
+	}
+	static fromVector({ x, y }: Vector2) {
+		return Math.atan2(y, x)
+	}
 }
 
 // https://easings.net/

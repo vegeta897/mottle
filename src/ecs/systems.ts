@@ -85,10 +85,13 @@ export const velocitySystem: System = (world) => {
 	for (let eid of velocityQuery(world)) {
 		if (eid === player && Level.segment) {
 			// TODO: Allow slight deviation from path
-			const toNextPoint = Vector2.subtract(Level.segment.end, {
-				x: Transform.x[eid],
-				y: Transform.y[eid],
-			})
+			const toNextPoint = Vector2.subtract(
+				Level.shape!.reverse ? Level.segment.start : Level.segment.end,
+				{
+					x: Transform.x[eid],
+					y: Transform.y[eid],
+				}
+			)
 			const velocityPoint = new Point(Velocity.x[eid], Velocity.y[eid])
 			const projected = velocityPoint.project(toNextPoint)
 			Velocity.x[eid] = clamp(projected.x, 0, toNextPoint.x)
@@ -148,40 +151,53 @@ export const areaConstraintSystem: System = (world) => {
 export const shapeSystem: System = (world) => {
 	if (Level.shape && Level.segment) {
 		// Replace this with length travelled check
-		const nextPoint = new Point().copyFrom(Level.segment.end)
+		const nextPoint = new Point().copyFrom(
+			Level.shape.reverse ? Level.segment.start : Level.segment.end
+		)
 		const pointFromPlayer = nextPoint.subtract({
 			x: Transform.x[player],
 			y: Transform.y[player],
 		})
 		if (pointFromPlayer.magnitudeSquared() < 4) {
 			Level.segment.complete = true
-			if (Level.segment.next && !Level.segment.next.complete) {
-				Level.segment = Level.segment.next
-				Transform.x[player] = Level.segment.start.x
-				Transform.y[player] = Level.segment.start.y
+			const nextSegment = Level.shape.reverse
+				? Level.segment.previous
+				: Level.segment.next
+			if (nextSegment && !nextSegment.complete) {
+				Level.segment = nextSegment
+				Transform.x[player] = Level.shape!.reverse
+					? Level.segment!.end.x
+					: Level.segment!.start.x
+				Transform.y[player] = Level.shape!.reverse
+					? Level.segment!.end.y
+					: Level.segment!.start.y
 			} else {
 				// Shape complete
 				Level.shape.complete = true
-				paintLine(Level.segment.end, false, 20)
+				paintLine(
+					Level.shape.reverse ? Level.segment.start : Level.segment.end,
+					false,
+					20
+				)
 				Player.painting[player] = 0
 				Drag.rate[player] = 0.2
 				Level.shape = null
 				Level.segment = null
 			}
 		}
-	} else {
-		Level.shape = getShapeAt(
+	} else if (
+		Velocity.speed[player] > 0 &&
+		getShapeAt(
 			{ x: Transform.x[player], y: Transform.y[player] },
 			{ x: Velocity.x[player], y: Velocity.y[player] }
 		)
-		if (Level.shape) {
-			Level.segment = Level.shape.segments[0]
-			Player.painting[player] = 1
-			Drag.rate[player] = 0.1
-			Transform.x[player] = Level.segment.start.x
-			Transform.y[player] = Level.segment.start.y
-		}
+	) {
+		Player.painting[player] = 1
+		Drag.rate[player] = 0.1
+		Transform.x[player] = Level.shape!.start.x
+		Transform.y[player] = Level.shape!.start.y
 	}
+
 	if (Player.painting[player] > 0) {
 		paintLine(
 			{ x: Transform.x[player], y: Transform.y[player] },
