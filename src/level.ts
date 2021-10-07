@@ -8,20 +8,21 @@ const { stage } = PixiApp.shared
 const shapeContainer: Container = new Container()
 stage.addChildAt(shapeContainer, 0)
 
-export enum PaintBucketStates {
-	SLEEP,
-	IDLE,
-	WALK,
-	SPILL,
-}
-
 const NEAR = 16
+
+type Segment = {
+	start: Vector2
+	end: Vector2
+	length: number
+	next?: Segment
+	previous?: Segment
+}
 
 type Shape = {
 	index: number
 	x: number
 	y: number
-	segments: { start: Vector2; end: Vector2; length: number }[]
+	segments: Segment[]
 	complete: boolean
 }
 
@@ -35,7 +36,12 @@ class XYPoint {
 
 type PointLocation = AngledPoint | XYPoint
 
-export const shapes: Shape[] = []
+const shapes: Shape[] = []
+
+export const Level: { shape: null | Shape; segment: null | Segment } = {
+	shape: null,
+	segment: null,
+}
 
 function addShape(x: number, y: number, points: PointLocation[]) {
 	const shape: Shape = {
@@ -54,6 +60,7 @@ function addShape(x: number, y: number, points: PointLocation[]) {
 	linesGraphic.moveTo(x, y)
 	let nextX = x
 	let nextY = y
+	let previousSegment: Segment | null = null
 	for (let point of points) {
 		const start = { x: nextX, y: nextY }
 		if (point instanceof XYPoint) {
@@ -66,11 +73,17 @@ function addShape(x: number, y: number, points: PointLocation[]) {
 		linesGraphic.lineTo(nextX, nextY)
 		pointsGraphic.drawCircle(nextX, nextY, 6)
 		const end = { x: nextX, y: nextY }
-		shape.segments.push({
+		const segment: Segment = {
 			start,
 			end,
 			length: Vector2.getMagnitude(Vector2.subtract(end, start)),
-		})
+		}
+		if (previousSegment) {
+			segment.previous = previousSegment
+			previousSegment.next = segment
+		}
+		shape.segments.push(segment)
+		previousSegment = segment
 	}
 	shapeContainer.addChild(pointsGraphic)
 	shapeContainer.addChild(linesGraphic)
@@ -111,4 +124,5 @@ export function getShapeAt(position: Vector2) {
 			return shape
 		}
 	}
+	return null
 }

@@ -4,7 +4,6 @@ import {
 	dragSystem,
 	forceSystem,
 	inputSystem,
-	paintBucketSystem,
 	playerSystem,
 	velocitySystem,
 	shapeSystem,
@@ -17,7 +16,6 @@ export default class ECS {
 	tickPipeline = pipe(
 		inputSystem,
 		playerSystem,
-		paintBucketSystem,
 		forceSystem,
 		velocitySystem,
 		dragSystem,

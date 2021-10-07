@@ -5,6 +5,7 @@ const Vector2 = {
 	y: Types.f32,
 }
 
+// TODO: Move to singleton object
 export const Player = defineComponent({ painting: Types.ui32 })
 
 export const Transform = defineComponent({
@@ -27,20 +28,3 @@ export const AreaConstraint = defineComponent({
 })
 
 export const DisplayObject = defineComponent()
-
-export const PaintBucket = defineComponent({
-	state: Types.ui8,
-	stateTime: Types.ui32,
-})
-
-// TODO: Make this a singleton, it doesn't need to be a component
-// Same for Player too probably
-export const OnPath = defineComponent({
-	shapeIndex: Types.ui32,
-	segmentIndex: Types.ui32,
-	startX: Types.f32,
-	startY: Types.f32,
-	endX: Types.f32,
-	endY: Types.f32,
-	segmentLength: Types.f32,
-})

@@ -2,7 +2,6 @@ import {
 	addComponent,
 	Changed,
 	defineQuery,
-	hasComponent,
 	removeComponent,
 	System,
 } from 'bitecs'
@@ -10,8 +9,6 @@ import {
 	AreaConstraint,
 	Drag,
 	Force,
-	OnPath,
-	PaintBucket,
 	Player,
 	Transform,
 	Velocity,
@@ -20,8 +17,7 @@ import { clamp, Vector2 } from '../util'
 import InputManager from '../input'
 import { PixiApp } from '../pixi/pixi_app'
 import { player, playerLeft, playerRight, playerSprite } from '../'
-import { getShapeAt, PaintBucketStates, shapes } from '../level'
-import Prando from 'prando'
+import { getShapeAt, Level } from '../level'
 import { paintLine } from '../paint'
 import '@pixi/math-extras'
 import { Point } from '@pixi/math'
@@ -68,35 +64,6 @@ export const playerSystem: System = (world) => {
 	return world
 }
 
-const rng = new Prando()
-
-const paintBucketQuery = defineQuery([PaintBucket])
-
-export const paintBucketSystem: System = (world) => {
-	for (let eid of paintBucketQuery(world)) {
-		if (PaintBucket.state[eid] === PaintBucketStates.SLEEP) continue
-		if (
-			PaintBucket.state[eid] === PaintBucketStates.IDLE &&
-			PaintBucket.stateTime[eid] === 60
-		) {
-			PaintBucket.state[eid] = PaintBucketStates.WALK
-			PaintBucket.stateTime[eid] = 0
-			addComponent(world, Force, eid)
-			Force.x[eid] = (rng.nextBoolean() ? 1 : -1) * 0.1
-			Force.y[eid] = (rng.nextBoolean() ? 1 : -1) * 0.1
-		} else if (
-			PaintBucket.state[eid] === PaintBucketStates.WALK &&
-			PaintBucket.stateTime[eid] === 100
-		) {
-			PaintBucket.state[eid] = PaintBucketStates.IDLE
-			PaintBucket.stateTime[eid] = 0
-			removeComponent(world, Force, eid)
-		}
-		PaintBucket.stateTime[eid]++
-	}
-	return world
-}
-
 const forceQuery = defineQuery([Force, Velocity])
 
 export const forceSystem: System = (world) => {
@@ -116,11 +83,12 @@ const velocityQuery = defineQuery([Transform, Velocity])
 
 export const velocitySystem: System = (world) => {
 	for (let eid of velocityQuery(world)) {
-		if (eid === player && hasComponent(world, OnPath, eid)) {
-			const toNextPoint = Vector2.subtract(
-				{ x: OnPath.endX[eid], y: OnPath.endY[eid] },
-				{ x: Transform.x[eid], y: Transform.y[eid] }
-			)
+		if (eid === player && Level.segment) {
+			// TODO: Allow slight deviation from path
+			const toNextPoint = Vector2.subtract(Level.segment.end, {
+				x: Transform.x[eid],
+				y: Transform.y[eid],
+			})
 			const velocityPoint = new Point(Velocity.x[eid], Velocity.y[eid])
 			const projected = velocityPoint.project(toNextPoint)
 			Velocity.x[eid] = clamp(projected.x, 0, toNextPoint.x)
@@ -177,48 +145,37 @@ export const areaConstraintSystem: System = (world) => {
 	return world
 }
 
-function setSegment(shape: typeof shapes[number]) {
-	const segment = shape.segments[OnPath.segmentIndex[player]]
-	Transform.x[player] = segment.start.x
-	Transform.y[player] = segment.start.y
-	OnPath.startX[player] = segment.start.x
-	OnPath.startY[player] = segment.start.y
-	OnPath.endX[player] = segment.end.x
-	OnPath.endY[player] = segment.end.y
-	OnPath.segmentLength[player] = segment.length
-}
-
 export const shapeSystem: System = (world) => {
-	if (hasComponent(world, OnPath, player)) {
+	if (Level.shape && Level.segment) {
 		// Replace this with length travelled check
-		const nextPoint = new Point(OnPath.endX[player], OnPath.endY[player])
+		const nextPoint = new Point().copyFrom(Level.segment.end)
 		const pointFromPlayer = nextPoint.subtract({
 			x: Transform.x[player],
 			y: Transform.y[player],
 		})
 		if (pointFromPlayer.magnitudeSquared() < 4) {
-			OnPath.segmentIndex[player]++
-			const shape = shapes[OnPath.shapeIndex[player]]
-			if (OnPath.segmentIndex[player] === shape.segments.length) {
+			if (!Level.segment.next) {
 				// Shape complete
-				shape.complete = true
-				paintLine({ x: OnPath.endX[player], y: OnPath.endY[player] }, false, 20)
+				Level.shape.complete = true
+				paintLine(Level.segment.end, false, 20)
 				Player.painting[player] = 0
 				Drag.rate[player] = 0.2
-				removeComponent(world, OnPath, player)
+				Level.shape = null
+				Level.segment = null
 			} else {
-				setSegment(shape)
+				Level.segment = Level.segment.next
+				Transform.x[player] = Level.segment.start.x
+				Transform.y[player] = Level.segment.start.y
 			}
 		}
 	} else {
-		const shape = getShapeAt({ x: Transform.x[player], y: Transform.y[player] })
-		if (shape) {
+		Level.shape = getShapeAt({ x: Transform.x[player], y: Transform.y[player] })
+		if (Level.shape) {
+			Level.segment = Level.shape.segments[0]
 			Player.painting[player] = 1
 			Drag.rate[player] = 0.1
-			addComponent(world, OnPath, player)
-			OnPath.shapeIndex[player] = shape.index
-			OnPath.segmentIndex[player] = 0
-			setSegment(shape)
+			Transform.x[player] = Level.segment.start.x
+			Transform.y[player] = Level.segment.start.y
 		}
 	}
 	if (Player.painting[player] > 0) {
