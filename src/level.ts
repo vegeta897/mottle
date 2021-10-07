@@ -1,6 +1,6 @@
 import { PixiApp } from './pixi/pixi_app'
 import { Vector2 } from './util'
-import { Container, Graphics } from 'pixi.js'
+import { Container, Graphics, PI_2 } from 'pixi.js'
 import { DEG_TO_RAD } from '@pixi/math'
 
 const { stage } = PixiApp.shared
@@ -8,12 +8,15 @@ const { stage } = PixiApp.shared
 const shapeContainer: Container = new Container()
 stage.addChildAt(shapeContainer, 0)
 
-const NEAR = 16
+const MAX_DIST = 20
+const MAX_ANGLE = 20
 
 type Segment = {
 	start: Vector2
 	end: Vector2
 	length: number
+	angle: number
+	complete: boolean
 	next?: Segment
 	previous?: Segment
 }
@@ -43,7 +46,12 @@ export const Level: { shape: null | Shape; segment: null | Segment } = {
 	segment: null,
 }
 
-function addShape(x: number, y: number, points: PointLocation[]) {
+function addShape(
+	x: number,
+	y: number,
+	points: PointLocation[],
+	options: { contiguous: boolean } = { contiguous: true }
+) {
 	const shape: Shape = {
 		index: shapes.length,
 		segments: [],
@@ -54,19 +62,22 @@ function addShape(x: number, y: number, points: PointLocation[]) {
 	shapes.push(shape)
 	const pointsGraphic = new Graphics()
 	pointsGraphic.beginFill(0xffe0dc)
-	pointsGraphic.drawCircle(x, y, NEAR)
+	pointsGraphic.drawCircle(x, y, MAX_DIST)
 	const linesGraphic = new Graphics()
 	linesGraphic.lineStyle(2, 0xffe0dc)
 	linesGraphic.moveTo(x, y)
 	let nextX = x
 	let nextY = y
 	let previousSegment: Segment | null = null
+	let angle
 	for (let point of points) {
 		const start = { x: nextX, y: nextY }
 		if (point instanceof XYPoint) {
+			angle = Math.atan2(point.y, point.x)
 			nextX += point.x
 			nextY += point.y
 		} else {
+			angle = point.degrees * DEG_TO_RAD
 			nextX += point.distance * Math.cos(point.degrees * DEG_TO_RAD)
 			nextY += point.distance * Math.sin(point.degrees * DEG_TO_RAD)
 		}
@@ -76,6 +87,8 @@ function addShape(x: number, y: number, points: PointLocation[]) {
 		const segment: Segment = {
 			start,
 			end,
+			angle,
+			complete: false,
 			length: Vector2.getMagnitude(Vector2.subtract(end, start)),
 		}
 		if (previousSegment) {
@@ -84,6 +97,10 @@ function addShape(x: number, y: number, points: PointLocation[]) {
 		}
 		shape.segments.push(segment)
 		previousSegment = segment
+	}
+	if (options.contiguous) {
+		shape.segments[0].previous = shape.segments[shape.segments.length - 1]
+		shape.segments[shape.segments.length - 1].next = shape.segments[0]
 	}
 	shapeContainer.addChild(pointsGraphic)
 	shapeContainer.addChild(linesGraphic)
@@ -114,12 +131,15 @@ export function createLevel() {
 	])
 }
 
-export function getShapeAt(position: Vector2) {
+export function getShapeAt(position: Vector2, velocity: Vector2) {
+	const velocityAngle = Math.atan2(velocity.y, velocity.x)
 	for (let shape of shapes) {
 		if (
 			!shape.complete &&
+			Math.abs(shape.segments[0].angle - velocityAngle) % PI_2 <
+				MAX_ANGLE * DEG_TO_RAD &&
 			Vector2.getMagnitudeSquared(Vector2.subtract(position, shape)) <=
-				NEAR ** 2
+				MAX_DIST ** 2
 		) {
 			return shape
 		}

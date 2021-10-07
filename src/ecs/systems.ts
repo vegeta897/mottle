@@ -154,7 +154,12 @@ export const shapeSystem: System = (world) => {
 			y: Transform.y[player],
 		})
 		if (pointFromPlayer.magnitudeSquared() < 4) {
-			if (!Level.segment.next) {
+			Level.segment.complete = true
+			if (Level.segment.next && !Level.segment.next.complete) {
+				Level.segment = Level.segment.next
+				Transform.x[player] = Level.segment.start.x
+				Transform.y[player] = Level.segment.start.y
+			} else {
 				// Shape complete
 				Level.shape.complete = true
 				paintLine(Level.segment.end, false, 20)
@@ -162,14 +167,13 @@ export const shapeSystem: System = (world) => {
 				Drag.rate[player] = 0.2
 				Level.shape = null
 				Level.segment = null
-			} else {
-				Level.segment = Level.segment.next
-				Transform.x[player] = Level.segment.start.x
-				Transform.y[player] = Level.segment.start.y
 			}
 		}
 	} else {
-		Level.shape = getShapeAt({ x: Transform.x[player], y: Transform.y[player] })
+		Level.shape = getShapeAt(
+			{ x: Transform.x[player], y: Transform.y[player] },
+			{ x: Velocity.x[player], y: Velocity.y[player] }
+		)
 		if (Level.shape) {
 			Level.segment = Level.shape.segments[0]
 			Player.painting[player] = 1
