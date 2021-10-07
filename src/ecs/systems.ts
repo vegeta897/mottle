@@ -17,7 +17,13 @@ import { clamp, Vector2 } from '../util'
 import InputManager from '../input'
 import { PixiApp } from '../pixi/pixi_app'
 import { player, playerLeft, playerRight, playerSprite } from '../'
-import { getShapeAt, Level } from '../level'
+import {
+	getNextSegment,
+	getSegmentEnd,
+	getSegmentStart,
+	getShapeAt,
+	Level,
+} from '../level'
 import { paintLine } from '../paint'
 import '@pixi/math-extras'
 import { Point } from '@pixi/math'
@@ -85,13 +91,10 @@ export const velocitySystem: System = (world) => {
 	for (let eid of velocityQuery(world)) {
 		if (eid === player && Level.segment) {
 			// TODO: Allow slight deviation from path
-			const toNextPoint = Vector2.subtract(
-				Level.shape!.reverse ? Level.segment.start : Level.segment.end,
-				{
-					x: Transform.x[eid],
-					y: Transform.y[eid],
-				}
-			)
+			const toNextPoint = Vector2.subtract(getSegmentEnd(), {
+				x: Transform.x[eid],
+				y: Transform.y[eid],
+			})
 			const velocityPoint = new Point(Velocity.x[eid], Velocity.y[eid])
 			const projected = velocityPoint.project(toNextPoint)
 			Velocity.x[eid] = clamp(projected.x, 0, toNextPoint.x)
@@ -151,34 +154,22 @@ export const areaConstraintSystem: System = (world) => {
 export const shapeSystem: System = (world) => {
 	if (Level.shape && Level.segment) {
 		// Replace this with length travelled check
-		const nextPoint = new Point().copyFrom(
-			Level.shape.reverse ? Level.segment.start : Level.segment.end
-		)
+		const nextPoint = new Point().copyFrom(getSegmentEnd())
 		const pointFromPlayer = nextPoint.subtract({
 			x: Transform.x[player],
 			y: Transform.y[player],
 		})
 		if (pointFromPlayer.magnitudeSquared() < 4) {
 			Level.segment.complete = true
-			const nextSegment = Level.shape.reverse
-				? Level.segment.previous
-				: Level.segment.next
+			const nextSegment = getNextSegment()
 			if (nextSegment && !nextSegment.complete) {
 				Level.segment = nextSegment
-				Transform.x[player] = Level.shape!.reverse
-					? Level.segment!.end.x
-					: Level.segment!.start.x
-				Transform.y[player] = Level.shape!.reverse
-					? Level.segment!.end.y
-					: Level.segment!.start.y
+				Transform.x[player] = getSegmentStart().x
+				Transform.y[player] = getSegmentStart().y
 			} else {
 				// Shape complete
 				Level.shape.complete = true
-				paintLine(
-					Level.shape.reverse ? Level.segment.start : Level.segment.end,
-					false,
-					20
-				)
+				paintLine(getSegmentEnd(), false, 20)
 				Player.painting[player] = 0
 				Drag.rate[player] = 0.2
 				Level.shape = null

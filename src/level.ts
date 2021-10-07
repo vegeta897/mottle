@@ -51,6 +51,7 @@ type PointLocation = AngledPoint | XYPoint
 
 const shapes: Shape[] = []
 
+// TODO: Make this a class instance
 export const Level: { shape: null | Shape; segment: null | Segment } = {
 	shape: null,
 	segment: null,
@@ -217,4 +218,14 @@ export function getShapeAt(position: Vector2, velocity: Vector2) {
 		}
 	}
 	return false
+}
+
+export function getSegmentStart() {
+	return Level.shape!.reverse ? Level.segment!.end : Level.segment!.start
+}
+export function getSegmentEnd() {
+	return Level.shape!.reverse ? Level.segment!.start : Level.segment!.end
+}
+export function getNextSegment() {
+	return Level.shape!.reverse ? Level.segment!.previous : Level.segment!.next
 }
