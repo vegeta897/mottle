@@ -2,6 +2,7 @@
 
 import { Transform } from './ecs/components'
 import { PI_2 } from 'pixi.js'
+import { differenceAngles } from 'yy-angle'
 
 export class Vector2 {
 	static getMagnitude({ x, y }: Vector2) {
@@ -70,11 +71,6 @@ export function aabbCollide(
 	return x1 < x2 + w2 && x1 + w1 > x2 && y1 < y2 + h2 && y1 + h1 > y2
 }
 
-// Modulo that always gives positive result
-function mod(x: number, mod: number) {
-	return ((x % mod) + mod) % mod
-}
-
 export class Angle {
 	static add(a: number, b: number) {
 		return (a + b) % PI_2
@@ -82,18 +78,7 @@ export class Angle {
 	static flip(a: number) {
 		return (a + Math.PI) % PI_2
 	}
-	// Normalize angle to [-Math.PI, Math.PI)
-	// Adapted from https://github.com/infusion/Angles.js (see LICENSE file)
-	static normalizeHalf(a: number) {
-		return mod(a + Math.PI, PI_2) - Math.PI
-	}
-	// Smallest diff between 2 angles (result is always positive)
-	// Adapted from https://github.com/infusion/Angles.js (see LICENSE file)
-	static diff(a: number, b: number) {
-		let diff = Angle.normalizeHalf(a - b)
-		if (diff > Math.PI) diff = diff - Math.PI
-		return Math.abs(diff)
-	}
+	static diff = differenceAngles
 	static fromVector({ x, y }: Vector2) {
 		return Math.atan2(y, x)
 	}
