@@ -1,7 +1,7 @@
 MIT License
 
 Copyright (c) 2021 Devin Spikowski
-Copyright (c) 2017 Robert Eisele
+Portions of code in /src/util.ts copyright (c) 2017 Robert Eisele
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
