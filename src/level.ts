@@ -11,6 +11,7 @@ stage.addChildAt(shapeContainer, 0)
 
 const MAX_DIST = 20
 const MAX_ANGLE = 20 * DEG_TO_RAD
+const GUIDE_COLOR = 0xff94b2
 
 enum SEGMENT_DIR {
 	NONE,
@@ -75,15 +76,13 @@ function addShape(
 	}
 	shapes.push(shape)
 	const pointsGraphic = new Graphics()
-	pointsGraphic.lineStyle(2, 0xffe0dc)
-	pointsGraphic.drawCircle(x, y, MAX_DIST)
-	pointsGraphic.lineStyle(0)
-	pointsGraphic.beginFill(0xffe0dc)
+	pointsGraphic.beginFill(GUIDE_COLOR)
+	pointsGraphic.drawCircle(x, y, 6)
 	const linesGraphic = new Graphics()
 	const dashedLines = new DashLine(linesGraphic, {
 		dash: [12, 8],
-		width: 2,
-		color: 0xffe0dc,
+		width: 3,
+		color: GUIDE_COLOR,
 	})
 	dashedLines.moveTo(x, y)
 	let nextX = x

@@ -5,6 +5,7 @@ import {
 	DisplayObject,
 	Drag,
 	Player,
+	setComponentXY,
 	Transform,
 	Velocity,
 } from './ecs/components'
@@ -35,8 +36,7 @@ async function startGame() {
 	addComponent(game.world, Player, player)
 	Player.painting[player] = 0
 	addComponent(game.world, Transform, player)
-	Transform.x[player] = 0
-	Transform.y[player] = 0
+	setComponentXY(Transform, player, { x: 0, y: 0 })
 	Transform.width[player] = 28
 	Transform.height[player] = 24
 	addComponent(game.world, Velocity, player)

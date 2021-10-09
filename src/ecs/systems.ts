@@ -50,10 +50,18 @@ export const playerSystem: System = (world) => {
 		x: mouse.local.x - Transform.x[player],
 		y: mouse.local.y - Transform.y[player],
 	}
-	if (delta.x > 0) {
-		playerSprite.texture = playerRight
+	if (Level.segment) {
+		if (getSegmentEnd().x > Transform.x[player]) {
+			playerSprite.texture = playerRight
+		} else {
+			playerSprite.texture = playerLeft
+		}
 	} else {
-		playerSprite.texture = playerLeft
+		if (delta.x > 0) {
+			playerSprite.texture = playerRight
+		} else {
+			playerSprite.texture = playerLeft
+		}
 	}
 	const deltaMagnitude = Vector2.getMagnitude(delta)
 	if (deltaMagnitude < 16) {
@@ -157,7 +165,7 @@ export const shapeSystem: System = (world) => {
 			x: Transform.x[player],
 			y: Transform.y[player],
 		})
-		if (pointFromPlayer.magnitudeSquared() < 4) {
+		if (pointFromPlayer.magnitudeSquared() < 144) {
 			Level.segment.complete = true
 			const nextSegment = getNextSegment()
 			if (nextSegment && !nextSegment.complete) {
