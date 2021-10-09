@@ -39,6 +39,7 @@ type Shape = {
 	reverse: boolean
 	complete: boolean
 	contiguous: boolean
+	rotation: number
 }
 
 class AngledPoint {
@@ -63,7 +64,10 @@ function addShape(
 	x: number,
 	y: number,
 	points: PointLocation[],
-	options: { contiguous: boolean } = { contiguous: true }
+	options: { contiguous?: boolean; rotate?: number } = {
+		contiguous: true,
+		rotate: 0,
+	}
 ) {
 	const shape: Shape = {
 		index: shapes.length,
@@ -71,7 +75,8 @@ function addShape(
 		startingSegments: [],
 		reverse: false,
 		complete: false,
-		contiguous: options.contiguous,
+		contiguous: options.contiguous ?? true,
+		rotation: (options.rotate ?? 0) * DEG_TO_RAD,
 		start: { x, y },
 	}
 	shapes.push(shape)
@@ -85,12 +90,17 @@ function addShape(
 		color: GUIDE_COLOR,
 	})
 	dashedLines.moveTo(x, y)
-	let nextX = x
-	let nextY = y
+	let nextX = 0
+	let nextY = 0
 	let previousSegment: Segment | null = null
 	let angle
-	for (let point of points) {
-		const start = { x: nextX, y: nextY }
+	for (const point of points) {
+		const start = { x: x + nextX, y: y + nextY }
+		if (shape.rotation !== 0) {
+			const rotated = Vector2.rotate({ x: nextX, y: nextY }, shape.rotation)
+			start.x = x + rotated.x
+			start.y = y + rotated.y
+		}
 		if (point instanceof XYPoint) {
 			angle = Angle.fromVector(point)
 			nextX += point.x
@@ -100,14 +110,20 @@ function addShape(
 			nextX += point.distance * Math.cos(point.degrees * DEG_TO_RAD)
 			nextY += point.distance * Math.sin(point.degrees * DEG_TO_RAD)
 		}
-		dashedLines.lineTo(nextX, nextY)
-		pointsGraphic.drawCircle(nextX, nextY, 6)
-		const end = { x: nextX, y: nextY }
+		const end = { x: x + nextX, y: y + nextY }
+		if (shape.rotation !== 0) {
+			angle += shape.rotation
+			const rotated = Vector2.rotate({ x: nextX, y: nextY }, shape.rotation)
+			end.x = x + rotated.x
+			end.y = y + rotated.y
+		}
+		dashedLines.lineTo(end.x, end.y)
+		pointsGraphic.drawCircle(end.x, end.y, 6)
 		const segment: Segment = {
 			start,
 			end,
 			angle,
-			direction: options.contiguous
+			direction: shape.contiguous
 				? SEGMENT_DIR.BIDIRECTIONAL
 				: SEGMENT_DIR.NONE,
 			complete: false,
@@ -121,7 +137,7 @@ function addShape(
 		}
 		shape.segments.push(segment)
 		if (
-			options.contiguous ||
+			shape.contiguous ||
 			!previousSegment ||
 			shape.segments.length === points.length
 		) {
@@ -135,7 +151,7 @@ function addShape(
 		}
 		previousSegment = segment
 	}
-	if (options.contiguous) {
+	if (shape.contiguous) {
 		shape.segments[0].previous = previousSegment!
 		previousSegment!.next = shape.segments[0]
 	}
@@ -151,12 +167,17 @@ export function createLevel() {
 		new XYPoint(-120, 0),
 	])
 	// Square
-	addShape(-80, -20, [
-		new XYPoint(-100, 0),
-		new XYPoint(0, -100),
-		new XYPoint(100, 0),
-		new XYPoint(0, 100),
-	])
+	addShape(
+		-80,
+		-20,
+		[
+			new XYPoint(-100, 0),
+			new XYPoint(0, -100),
+			new XYPoint(100, 0),
+			new XYPoint(0, 100),
+		],
+		{ rotate: -15 }
+	)
 	// Star
 	const starSize = 180
 	addShape(80, 80, [
@@ -170,14 +191,14 @@ export function createLevel() {
 	const zigLength = 50
 	addShape(
 		-20,
-		80,
+		130,
 		[
 			new XYPoint(-zigLength, zigLength),
 			new XYPoint(-zigLength, -zigLength),
 			new XYPoint(-zigLength, zigLength),
 			new XYPoint(-zigLength, -zigLength),
 		],
-		{ contiguous: false }
+		{ contiguous: false, rotate: 20 }
 	)
 }
 
