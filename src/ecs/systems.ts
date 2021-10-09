@@ -10,6 +10,7 @@ import {
 	Drag,
 	Force,
 	Player,
+	setComponentXY,
 	Transform,
 	Velocity,
 } from './components'
@@ -64,8 +65,7 @@ export const playerSystem: System = (world) => {
 			ACCELERATION * Math.min(1, (deltaMagnitude - 12) / 32)
 		)
 		addComponent(world, Force, player)
-		Force.x[player] = force.x
-		Force.y[player] = force.y
+		setComponentXY(Force, player, force)
 	}
 	return world
 }
@@ -79,8 +79,7 @@ export const forceSystem: System = (world) => {
 			y: Velocity.y[eid] + Force.y[eid],
 		}
 		Velocity.speed[eid] = Vector2.getMagnitude(newVelocity)
-		Velocity.x[eid] = newVelocity.x
-		Velocity.y[eid] = newVelocity.y
+		setComponentXY(Velocity, eid, newVelocity)
 	}
 	return world
 }
@@ -118,8 +117,7 @@ export const dragSystem: System = (world) => {
 	for (let eid of dragQuery(world)) {
 		if (Velocity.speed[eid] === 0) continue
 		if (Velocity.speed[eid] < MIN_SPEED) {
-			Velocity.x[eid] = 0
-			Velocity.y[eid] = 0
+			setComponentXY(Velocity, eid, { x: 0, y: 0 })
 			Velocity.speed[eid] = 0
 		} else {
 			Velocity.x[eid] *= 1 - Drag.rate[eid]
@@ -164,8 +162,7 @@ export const shapeSystem: System = (world) => {
 			const nextSegment = getNextSegment()
 			if (nextSegment && !nextSegment.complete) {
 				Level.segment = nextSegment
-				Transform.x[player] = getSegmentStart().x
-				Transform.y[player] = getSegmentStart().y
+				setComponentXY(Transform, player, getSegmentStart())
 			} else {
 				// Shape complete
 				Level.shape.complete = true
@@ -185,8 +182,7 @@ export const shapeSystem: System = (world) => {
 	) {
 		Player.painting[player] = 1
 		Drag.rate[player] = 0.1
-		Transform.x[player] = Level.shape!.start.x
-		Transform.y[player] = Level.shape!.start.y
+		setComponentXY(Transform, player, Level.shape!.start)
 	}
 
 	if (Player.painting[player] > 0) {
