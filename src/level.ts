@@ -2,6 +2,7 @@ import { PixiApp } from './pixi/pixi_app'
 import { Angle, Vector2 } from './util'
 import { Container, Graphics } from 'pixi.js'
 import { DEG_TO_RAD } from '@pixi/math'
+import { DashLine } from 'pixi-dashed-line'
 
 const { stage } = PixiApp.shared
 
@@ -79,8 +80,12 @@ function addShape(
 	pointsGraphic.lineStyle(0)
 	pointsGraphic.beginFill(0xffe0dc)
 	const linesGraphic = new Graphics()
-	linesGraphic.lineStyle(2, 0xffe0dc)
-	linesGraphic.moveTo(x, y)
+	const dashedLines = new DashLine(linesGraphic, {
+		dash: [12, 8],
+		width: 2,
+		color: 0xffe0dc,
+	})
+	dashedLines.moveTo(x, y)
 	let nextX = x
 	let nextY = y
 	let previousSegment: Segment | null = null
@@ -96,7 +101,7 @@ function addShape(
 			nextX += point.distance * Math.cos(point.degrees * DEG_TO_RAD)
 			nextY += point.distance * Math.sin(point.degrees * DEG_TO_RAD)
 		}
-		linesGraphic.lineTo(nextX, nextY)
+		dashedLines.lineTo(nextX, nextY)
 		pointsGraphic.drawCircle(nextX, nextY, 6)
 		const end = { x: nextX, y: nextY }
 		const segment: Segment = {
