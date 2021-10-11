@@ -19,7 +19,8 @@ import {
 	updateSpeed,
 	Velocity,
 } from './components'
-import { easeInCirc, easeOutCirc, easeOutCubic, Vector2 } from '../util'
+import { Vector2 } from '../util'
+import { circIn, circOut, cubicOut } from '@gamestdio/easing'
 import InputManager from '../input'
 import { PixiApp } from '../pixi/pixi_app'
 import { player, playerLeft, playerRight, playerSprite } from '../'
@@ -96,7 +97,7 @@ export const playerSystem: System = (world) => {
 					(Level.shape!.reverse ? -1 : 1)
 			)
 			const drift = Level.segment.perpendicularPoint.dot(deltaPoint)
-			const driftAmount = easeOutCubic(Math.abs(drift) * deltaFactor)
+			const driftAmount = cubicOut(Math.abs(drift) * deltaFactor)
 			const driftPoint = Level.segment.perpendicularPoint.multiplyScalar(
 				drift * driftAmount * 4
 			)
@@ -155,10 +156,10 @@ export const jumpSystem: System = (world) => {
 	for (let eid of jumpQuery(world)) {
 		const progressFloat = (Jump.progress[eid] / Jump.duration[eid]) * 2
 		if (progressFloat < 1) {
-			Transform.z[eid] = easeOutCirc(progressFloat) * Jump.height[eid]
+			Transform.z[eid] = circOut(progressFloat) * Jump.height[eid]
 		} else {
 			Transform.z[eid] =
-				Jump.height[eid] - easeInCirc(progressFloat - 1) * Jump.height[eid]
+				Jump.height[eid] - circIn(progressFloat - 1) * Jump.height[eid]
 		}
 		if (Jump.progress[eid] === Jump.duration[eid]) {
 			removeComponent(world, Jump, eid)

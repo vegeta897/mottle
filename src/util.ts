@@ -97,26 +97,3 @@ export class Angle {
 		return Math.atan2(y, x)
 	}
 }
-
-// https://easings.net/
-export function easeInCubic(x: number): number {
-	return x * x * x
-}
-export function easeOutCubic(x: number): number {
-	return 1 - Math.pow(1 - x, 3)
-}
-export function easeInSine(x: number): number {
-	return 1 - Math.cos((x * Math.PI) / 2)
-}
-export function easeOutSine(x: number): number {
-	return Math.sin((x * Math.PI) / 2)
-}
-export function easeInExpo(x: number): number {
-	return x === 0 ? 0 : 2 ** (10 * x - 10)
-}
-export function easeInCirc(x: number): number {
-	return 1 - Math.sqrt(1 - x ** 2)
-}
-export function easeOutCirc(x: number): number {
-	return Math.sqrt(1 - (x - 1) ** 2)
-}
