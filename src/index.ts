@@ -38,6 +38,7 @@ async function startGame() {
 	Player.painting[player] = 0
 	addComponent(game.world, Transform, player)
 	setComponentXY(Transform, player, { x: 200, y: SCREEN_HEIGHT / 2 })
+	Transform.z[player] = 0
 	Transform.width[player] = 28
 	Transform.height[player] = 24
 	addComponent(game.world, Velocity, player)

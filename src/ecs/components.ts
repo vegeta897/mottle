@@ -33,6 +33,7 @@ export const Transform = defineComponent({
 	...Vector2C,
 	width: Types.f32,
 	height: Types.f32,
+	z: Types.f32,
 })
 
 export const Velocity = defineComponent({ ...Vector2C, speed: Types.f32 })
@@ -40,6 +41,13 @@ export const Velocity = defineComponent({ ...Vector2C, speed: Types.f32 })
 export const Force = defineComponent(Vector2C)
 
 export const Drag = defineComponent({ rate: Types.f32 })
+
+export const Jump = defineComponent({
+	...Vector2C,
+	height: Types.f32,
+	duration: Types.ui32,
+	progress: Types.ui32,
+})
 
 export const AreaConstraint = defineComponent({
 	top: Types.i32,

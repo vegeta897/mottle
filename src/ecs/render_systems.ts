@@ -7,7 +7,7 @@ const newSprites = enterQuery(spriteQuery)
 
 function updateSprite(eid: number) {
 	DisplayObjects[eid].x = Math.floor(Transform.x[eid])
-	DisplayObjects[eid].y = Math.floor(Transform.y[eid])
+	DisplayObjects[eid].y = Math.floor(Transform.y[eid] - Transform.z[eid])
 }
 
 export const spriteSystem: System = (world) => {

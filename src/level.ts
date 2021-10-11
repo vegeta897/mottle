@@ -1,6 +1,6 @@
 import { PixiApp, SCREEN_HEIGHT } from './pixi/pixi_app'
 import { Angle, Vector2 } from './util'
-import { Container, Graphics, Point } from 'pixi.js'
+import { Container, Graphics, Point, Rectangle } from 'pixi.js'
 import { DEG_TO_RAD } from '@pixi/math'
 import { DashLine } from 'pixi-dashed-line'
 import * as PIXI from 'pixi.js'
@@ -16,8 +16,7 @@ const perforationContainer = new Container()
 perforationContainer.y = 1
 spriteContainer.addChildAt(perforationContainer, 0)
 
-const MAX_DIST = 20
-const MAX_ANGLE = 20 * DEG_TO_RAD
+const MAX_ANGLE = 25 * DEG_TO_RAD
 const GUIDE_COLOR = 0xff94b2
 
 enum SEGMENT_DIR {
@@ -51,6 +50,7 @@ type Shape = {
 	complete: boolean
 	contiguous: boolean
 	rotation: number
+	boundingBox: Rectangle
 }
 
 const shapes: Shape[] = []
@@ -79,11 +79,14 @@ function addShape(
 		contiguous: options.contiguous ?? true,
 		rotation: (options.rotate ?? 0) * DEG_TO_RAD,
 		start: { x, y },
+		boundingBox: new Rectangle(),
 	}
+	// TODO: Set bounding box based on min/max x/y coords
+	// TODO: Do this in Shapes function. Also handle rotation in Shapes function.
 	shapes.push(shape)
 	const pointsGraphic = new Graphics()
 	pointsGraphic.beginFill(GUIDE_COLOR)
-	pointsGraphic.drawCircle(x, y, 6)
+	pointsGraphic.drawCircle(x, y, 4)
 	const linesGraphic = new Graphics()
 	const dashedLines = new DashLine(linesGraphic, {
 		dash: [10.08, 14.08], // Decimals for irregular rasterization
@@ -125,7 +128,7 @@ function addShape(
 		end.x = Math.round(end.x)
 		end.y = Math.round(end.y)
 		dashedLines.lineTo(end.x, end.y)
-		pointsGraphic.drawCircle(end.x, end.y, 6)
+		pointsGraphic.drawCircle(end.x, end.y, 4)
 		const parallelPoint = new Point(
 			end.x - start.x,
 			end.y - start.y
@@ -205,7 +208,11 @@ export function createLevel() {
 	addShape(750, 300, Shapes.zigZag(4, 50), { contiguous: false, rotate: -10 })
 }
 
-export function getShapeAt(position: Vector2, velocity: Vector2) {
+export function getShapeAt(
+	position: Vector2,
+	velocity: Vector2,
+	range: number
+) {
 	const velocityAngle = Angle.fromVector(velocity)
 	for (let shape of shapes.filter((s) => !s.complete)) {
 		for (let segment of shape.startingSegments) {
@@ -219,7 +226,7 @@ export function getShapeAt(position: Vector2, velocity: Vector2) {
 				Vector2.getMagnitudeSquared(
 					Vector2.subtract(position, segment.start)
 				) <=
-					MAX_DIST ** 2
+					range ** 2
 			) {
 				direction = SEGMENT_DIR.START_TO_END
 				start.x = segment.start.x
@@ -230,7 +237,7 @@ export function getShapeAt(position: Vector2, velocity: Vector2) {
 				) &&
 				Angle.diff(Angle.flip(segment.angle), velocityAngle) < MAX_ANGLE &&
 				Vector2.getMagnitudeSquared(Vector2.subtract(position, segment.end)) <=
-					MAX_DIST ** 2
+					range ** 2
 			) {
 				direction = SEGMENT_DIR.END_TO_START
 				start.x = segment.end.x

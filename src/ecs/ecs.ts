@@ -8,6 +8,7 @@ import {
 	velocitySystem,
 	shapeSystem,
 	scrollSystem,
+	jumpSystem,
 } from './systems'
 import { Force } from './components'
 import { cameraSystem, spriteSystem } from './render_systems'
@@ -19,6 +20,7 @@ export default class ECS {
 		inputSystem,
 		playerSystem,
 		forceSystem,
+		jumpSystem,
 		velocitySystem,
 		dragSystem,
 		areaConstraintSystem,

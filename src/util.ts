@@ -114,3 +114,9 @@ export function easeOutSine(x: number): number {
 export function easeInExpo(x: number): number {
 	return x === 0 ? 0 : 2 ** (10 * x - 10)
 }
+export function easeInCirc(x: number): number {
+	return 1 - Math.sqrt(1 - x ** 2)
+}
+export function easeOutCirc(x: number): number {
+	return Math.sqrt(1 - (x - 1) ** 2)
+}

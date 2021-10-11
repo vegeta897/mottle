@@ -1,7 +1,9 @@
 import {
 	addComponent,
 	defineQuery,
+	enterQuery,
 	hasComponent,
+	Not,
 	removeComponent,
 	System,
 } from 'bitecs'
@@ -10,13 +12,14 @@ import {
 	componentToVector2,
 	Drag,
 	Force,
+	Jump,
 	Player,
 	setComponentXY,
 	Transform,
 	updateSpeed,
 	Velocity,
 } from './components'
-import { easeOutCubic, Vector2 } from '../util'
+import { easeInCirc, easeOutCirc, easeOutCubic, Vector2 } from '../util'
 import InputManager from '../input'
 import { PixiApp } from '../pixi/pixi_app'
 import { player, playerLeft, playerRight, playerSprite } from '../'
@@ -64,7 +67,7 @@ const ACCELERATION = 1
 // Canvas is like a big conveyor belt?
 
 export const playerSystem: System = (world) => {
-	if (!mouse.leftButton) {
+	if (!mouse.leftButton || hasComponent(world, Jump, player)) {
 		removeComponent(world, Force, player)
 		return world
 	}
@@ -86,17 +89,19 @@ export const playerSystem: System = (world) => {
 		deltaPoint.multiplyScalar(1 / deltaMagnitude, deltaPoint) // Normalize
 		const deltaFactor = Math.min(1, (deltaMagnitude - 12) / 32)
 		if (Level.segment) {
+			// TODO: Store forward momentum and drift momentum
 			const forward = Math.max(
 				0,
 				Level.segment.parallelPoint.dot(deltaPoint) *
 					(Level.shape!.reverse ? -1 : 1)
 			)
 			const drift = Level.segment.perpendicularPoint.dot(deltaPoint)
-			const driftAmount = easeOutCubic(Math.abs(drift))
+			const driftAmount = easeOutCubic(Math.abs(drift) * deltaFactor)
 			const driftPoint = Level.segment.perpendicularPoint.multiplyScalar(
 				drift * driftAmount * 4
 			)
-			Level.segment.progress += forward * (7 / Level.segment.length)
+			Level.segment.progress +=
+				forward * (7 / Level.segment.length) * deltaFactor
 			const position = Vector2.add(
 				getSegmentStart(),
 				Level.segment.parallelPoint.multiplyScalar(
@@ -130,6 +135,40 @@ export const forceSystem: System = (world) => {
 	return world
 }
 
+const jumpQuery = defineQuery([Jump, Transform])
+const enterJump = enterQuery(jumpQuery)
+
+export const jumpSystem: System = (world) => {
+	for (let eid of enterJump(world)) {
+		addComponent(world, Velocity, eid)
+		const delta = Vector2.subtract(
+			componentToVector2(Jump, eid),
+			componentToVector2(Transform, eid)
+		)
+		setComponentXY(
+			Velocity,
+			eid,
+			Vector2.multiplyScalar(delta, 1 / Jump.duration[eid])
+		)
+		updateSpeed(eid)
+	}
+	for (let eid of jumpQuery(world)) {
+		const progressFloat = (Jump.progress[eid] / Jump.duration[eid]) * 2
+		if (progressFloat < 1) {
+			Transform.z[eid] = easeOutCirc(progressFloat) * Jump.height[eid]
+		} else {
+			Transform.z[eid] =
+				Jump.height[eid] - easeInCirc(progressFloat - 1) * Jump.height[eid]
+		}
+		if (Jump.progress[eid] === Jump.duration[eid]) {
+			removeComponent(world, Jump, eid)
+			Transform.z[eid] = 0
+		}
+		Jump.progress[eid]++
+	}
+	return world
+}
+
 const velocityQuery = defineQuery([Transform, Velocity])
 
 export const velocitySystem: System = (world) => {
@@ -142,7 +181,7 @@ export const velocitySystem: System = (world) => {
 
 const MIN_SPEED = 0.2
 
-const dragQuery = defineQuery([Drag, Velocity])
+const dragQuery = defineQuery([Drag, Velocity, Not(Jump)])
 
 export const dragSystem: System = (world) => {
 	for (let eid of dragQuery(world)) {
@@ -190,7 +229,10 @@ export const areaConstraintSystem: System = (world) => {
 	return world
 }
 
+// TODO: Highlight nodes near cursor, use this for choosing start node
+
 export const shapeSystem: System = (world) => {
+	const inverseSpeedFactor = 1 - Math.min(1, Velocity.speed[player] / 4)
 	if (Level.shape && Level.segment) {
 		if (Level.segment.progress >= 1) {
 			Level.segment.complete = true
@@ -207,22 +249,28 @@ export const shapeSystem: System = (world) => {
 				Player.painting[player] = 0
 				Level.shape = null
 				Level.segment = null
-				addComponent(world, Velocity, player)
 			}
+		} else if (
+			Player.painting[player] === 0 &&
+			!hasComponent(world, Jump, player)
+		) {
+			Player.painting[player] = 1
 		}
 	} else if (
 		Velocity.speed[player] > 0 &&
 		getShapeAt(
 			componentToVector2(Transform, player),
-			componentToVector2(Velocity, player)
+			componentToVector2(Velocity, player),
+			(1 - inverseSpeedFactor) * 30
 		)
 	) {
 		// Start shape
-		Player.painting[player] = 1
-		// Drag.rate[player] = 0.1
 		removeComponent(world, Force, player)
-		removeComponent(world, Velocity, player)
-		setComponentXY(Transform, player, Level.shape!.start)
+		addComponent(world, Jump, player)
+		setComponentXY(Jump, player, Level.shape!.start)
+		Jump.duration[player] = 8 + inverseSpeedFactor * 16 // Ticks
+		Jump.height[player] = 10 + inverseSpeedFactor * 10
+		Jump.progress[player] = 0
 	}
 
 	if (Player.painting[player] > 0) {
