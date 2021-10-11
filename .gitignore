@@ -4,3 +4,4 @@ npm-debug.*
 /.idea
 
 /dist
+/bundle-report.html

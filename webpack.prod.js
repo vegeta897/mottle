@@ -4,6 +4,7 @@ const { CleanWebpackPlugin } = require('clean-webpack-plugin')
 const ImageminPlugin = require('imagemin-webpack-plugin').default
 const common = require('./webpack.common')
 const { ESBuildMinifyPlugin } = require('esbuild-loader')
+const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer')
 
 module.exports = merge(common, {
 	mode: 'production',
@@ -20,6 +21,10 @@ module.exports = merge(common, {
 			optipng: {
 				optimizationLevel: 7,
 			},
+		}),
+		new BundleAnalyzerPlugin({
+			analyzerMode: 'static',
+			reportFilename: '../bundle-report.html',
 		}),
 		new ZipPlugin({
 			filename: 'app.zip',
