@@ -11,9 +11,9 @@ class XYPoint {
 
 export class ShapeCreationData {
 	public boundingBox = new Rectangle()
+	public rotation = 0
 	constructor(
 		private points: (AngledPoint | XYPoint)[],
-		public rotation: number = 0,
 		public contiguous: boolean = true
 	) {}
 	rotate(degrees: number) {
@@ -88,6 +88,6 @@ export const Shapes = {
 				new XYPoint(segmentLength, segmentLength * (i % 2 === 0 ? 1 : -1))
 			)
 		}
-		return new ShapeCreationData(points)
+		return new ShapeCreationData(points, false)
 	},
 }

@@ -5,7 +5,7 @@ import { DEG_TO_RAD } from '@pixi/math'
 import { DashLine } from 'pixi-dashed-line'
 import * as PIXI from 'pixi.js'
 import { AreaConstraint } from './ecs/components'
-import { player } from './index'
+import { player } from './'
 import { ShapeCreationData, Shapes } from './shapes'
 
 const { spriteContainer } = PixiApp.shared
@@ -42,7 +42,6 @@ type Segment = {
 }
 
 type Shape = {
-	index: number
 	segments: Segment[]
 	startingSegments: Segment[]
 	start: Vector2
@@ -53,7 +52,7 @@ type Shape = {
 	boundingBox: Rectangle
 }
 
-const shapes: Shape[] = []
+const shapes: Set<Shape> = new Set()
 
 // TODO: Make this a class instance
 export const Level: { shape: null | Shape; segment: null | Segment } = {
@@ -63,7 +62,6 @@ export const Level: { shape: null | Shape; segment: null | Segment } = {
 
 function addShape(x: number, y: number, data: ShapeCreationData) {
 	const shape: Shape = {
-		index: shapes.length,
 		segments: [],
 		startingSegments: [],
 		reverse: false,
@@ -71,7 +69,7 @@ function addShape(x: number, y: number, data: ShapeCreationData) {
 		...data,
 		start: { x, y },
 	}
-	shapes.push(shape)
+	shapes.add(shape)
 	const pointsGraphic = new Graphics()
 	pointsGraphic.beginFill(GUIDE_COLOR)
 	pointsGraphic.drawCircle(x, y, 4)
@@ -174,7 +172,7 @@ export function getShapeAt(
 	range: number
 ) {
 	const velocityAngle = Angle.fromVector(velocity)
-	for (let shape of shapes.filter((s) => !s.complete)) {
+	for (let shape of [...shapes].filter((s) => !s.complete)) {
 		for (let segment of shape.startingSegments) {
 			let direction = SEGMENT_DIR.NONE
 			const start = { x: 0, y: 0 }
@@ -228,4 +226,10 @@ export function getNextSegment() {
 export function updateLevel() {
 	if (spriteContainer.toGlobal(perforationContainer).x < 0)
 		perforationContainer.x += PERFORATION_GAP
+	for (const shape of shapes) {
+		if (spriteContainer.toGlobal({ x: shape.boundingBox.right, y: 0 }).x < 0) {
+			//TODO: shape.destroy()
+			shapes.delete(shape)
+		}
+	}
 }
