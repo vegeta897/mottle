@@ -70,10 +70,7 @@ function addShape(x: number, y: number, data: ShapeCreationData) {
 		complete: false,
 		...data,
 		start: { x, y },
-		boundingBox: new Rectangle(),
 	}
-	// TODO: Set bounding box based on min/max x/y coords
-	// TODO: Do this in Shapes function. Also handle rotation in Shapes function.
 	shapes.push(shape)
 	const pointsGraphic = new Graphics()
 	pointsGraphic.beginFill(GUIDE_COLOR)
@@ -136,8 +133,8 @@ function addShape(x: number, y: number, data: ShapeCreationData) {
 		}
 		previousSegment = segment
 		if (
-			segment.end.y < AreaConstraint.top[player] ||
-			segment.end.y > AreaConstraint.bottom[player]
+			shape.boundingBox.top < AreaConstraint.top[player] ||
+			shape.boundingBox.bottom > AreaConstraint.bottom[player]
 		)
 			throw `Shape point [${segment.end.x},${segment.end.y}] out of bounds!`
 	}

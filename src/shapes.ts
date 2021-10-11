@@ -1,4 +1,4 @@
-import { DEG_TO_RAD } from 'pixi.js'
+import { DEG_TO_RAD, Rectangle } from 'pixi.js'
 import { Angle, Vector2 } from './util'
 
 class AngledPoint {
@@ -10,6 +10,7 @@ class XYPoint {
 }
 
 export class ShapeCreationData {
+	public boundingBox = new Rectangle()
 	constructor(
 		private points: (AngledPoint | XYPoint)[],
 		public rotation: number = 0,
@@ -22,14 +23,17 @@ export class ShapeCreationData {
 	getSegmentData(
 		origin: Vector2
 	): { start: Vector2; end: Vector2; angle: number }[] {
+		this.boundingBox.x = origin.x
+		this.boundingBox.y = origin.y
 		const nextPoint = Vector2.new()
 		let points = this.points.map((point) => {
 			let angle
 			if (point instanceof XYPoint) {
 				angle = Angle.fromVector(point) + this.rotation
-				const delta =
-					this.rotation === 0 ? point : Vector2.rotate(point, this.rotation)
-				Vector2.assign(nextPoint, Vector2.add(nextPoint, delta))
+				Vector2.assign(
+					nextPoint,
+					Vector2.add(nextPoint, Vector2.rotate(point, this.rotation))
+				)
 			} else {
 				angle = point.degrees * DEG_TO_RAD + this.rotation
 				Vector2.assign(
@@ -45,6 +49,7 @@ export class ShapeCreationData {
 			const start = Vector2.round(Vector2.add(origin, previousPoint))
 			Vector2.assign(previousPoint, point)
 			const end = Vector2.round(Vector2.add(origin, previousPoint))
+			this.boundingBox.enlarge(new Rectangle(end.x, end.y))
 			segments.push({ start, end, angle: point.angle })
 		}
 		return segments
