@@ -6,7 +6,7 @@ import { DashLine } from 'pixi-dashed-line'
 import * as PIXI from 'pixi.js'
 import { AreaConstraint } from './ecs/components'
 import { player } from './index'
-import { PointLocation, Shapes, XYPoint } from './shapes'
+import { ShapeCreationData, Shapes } from './shapes'
 
 const { spriteContainer } = PixiApp.shared
 
@@ -61,23 +61,15 @@ export const Level: { shape: null | Shape; segment: null | Segment } = {
 	segment: null,
 }
 
-function addShape(
-	x: number,
-	y: number,
-	points: PointLocation[],
-	options: { contiguous?: boolean; rotate?: number } = {
-		contiguous: true,
-		rotate: 0,
-	}
-) {
+function addShape(x: number, y: number, data: ShapeCreationData) {
 	const shape: Shape = {
 		index: shapes.length,
 		segments: [],
 		startingSegments: [],
 		reverse: false,
 		complete: false,
-		contiguous: options.contiguous ?? true,
-		rotation: (options.rotate ?? 0) * DEG_TO_RAD,
+		contiguous: data.contiguous ?? true,
+		rotation: (data.rotation ?? 0) * DEG_TO_RAD,
 		start: { x, y },
 		boundingBox: new Rectangle(),
 	}
@@ -96,48 +88,18 @@ function addShape(
 		join: PIXI.LINE_JOIN.ROUND,
 	})
 	dashedLines.moveTo(x, y)
-	let nextX = 0
-	let nextY = 0
 	let previousSegment: Segment | null = null
-	let angle
-	for (const point of points) {
-		const start = { x: x + nextX, y: y + nextY }
-		if (shape.rotation !== 0) {
-			const rotated = Vector2.rotate({ x: nextX, y: nextY }, shape.rotation)
-			start.x = x + rotated.x
-			start.y = y + rotated.y
-		}
-		start.x = Math.round(start.x)
-		start.y = Math.round(start.y)
-		if (point instanceof XYPoint) {
-			angle = Angle.fromVector(point)
-			nextX += point.x
-			nextY += point.y
-		} else {
-			angle = point.degrees * DEG_TO_RAD
-			nextX += point.distance * Math.cos(point.degrees * DEG_TO_RAD)
-			nextY += point.distance * Math.sin(point.degrees * DEG_TO_RAD)
-		}
-		const end = { x: x + nextX, y: y + nextY }
-		if (shape.rotation !== 0) {
-			angle += shape.rotation
-			const rotated = Vector2.rotate({ x: nextX, y: nextY }, shape.rotation)
-			end.x = x + rotated.x
-			end.y = y + rotated.y
-		}
-		end.x = Math.round(end.x)
-		end.y = Math.round(end.y)
-		dashedLines.lineTo(end.x, end.y)
-		pointsGraphic.drawCircle(end.x, end.y, 4)
+	const segmentDataList = data.getSegmentData({ x, y })
+	for (const segmentData of segmentDataList) {
+		dashedLines.lineTo(segmentData.end.x, segmentData.end.y)
+		pointsGraphic.drawCircle(segmentData.end.x, segmentData.end.y, 4)
 		const parallelPoint = new Point(
-			end.x - start.x,
-			end.y - start.y
+			segmentData.end.x - segmentData.start.x,
+			segmentData.end.y - segmentData.start.y
 		).normalize()
 		const perpendicularVector2 = Vector2.rotate(parallelPoint, Math.PI / 2)
 		const segment: Segment = {
-			start,
-			end,
-			angle,
+			...segmentData,
 			parallelPoint,
 			perpendicularPoint: new Point(
 				perpendicularVector2.x,
@@ -149,7 +111,9 @@ function addShape(
 			complete: false,
 			progress: 0,
 			drift: 0,
-			length: Vector2.getMagnitude(Vector2.subtract(end, start)),
+			length: Vector2.getMagnitude(
+				Vector2.subtract(segmentData.end, segmentData.start)
+			),
 		}
 		if (previousSegment) {
 			segment.previous = previousSegment
@@ -161,22 +125,22 @@ function addShape(
 		if (
 			shape.contiguous ||
 			!previousSegment ||
-			shape.segments.length === points.length
+			shape.segments.length === segmentDataList.length
 		) {
 			shape.startingSegments.push(segment)
 		}
 		if (
-			shape.segments.length === points.length &&
+			shape.segments.length === segmentDataList.length &&
 			segment.direction === SEGMENT_DIR.NONE
 		) {
 			segment.direction = SEGMENT_DIR.END_TO_START
 		}
 		previousSegment = segment
 		if (
-			end.y < AreaConstraint.top[player] ||
-			end.y > AreaConstraint.bottom[player]
+			segment.end.y < AreaConstraint.top[player] ||
+			segment.end.y > AreaConstraint.bottom[player]
 		)
-			throw `Shape point [${end.x},${end.y}] out of bounds!`
+			throw `Shape point [${segment.end.x},${segment.end.y}] out of bounds!`
 	}
 	if (shape.contiguous) {
 		shape.segments[0].previous = previousSegment!
@@ -203,9 +167,9 @@ export function createLevel() {
 	}
 	perforationContainer.addChild(perforationGraphic)
 	addShape(400, 180, Shapes.triangleIso(60, 120))
-	addShape(500, 250, Shapes.square(100), { rotate: -15 })
+	addShape(500, 250, Shapes.square(100).rotate(-15))
 	addShape(630, 130, Shapes.star(180))
-	addShape(750, 300, Shapes.zigZag(4, 50), { contiguous: false, rotate: -10 })
+	addShape(750, 300, Shapes.zigZag(4, 50).rotate(-10))
 }
 
 export function getShapeAt(
