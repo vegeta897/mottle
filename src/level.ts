@@ -68,8 +68,7 @@ function addShape(x: number, y: number, data: ShapeCreationData) {
 		startingSegments: [],
 		reverse: false,
 		complete: false,
-		contiguous: data.contiguous ?? true,
-		rotation: (data.rotation ?? 0) * DEG_TO_RAD,
+		...data,
 		start: { x, y },
 		boundingBox: new Rectangle(),
 	}
@@ -168,7 +167,7 @@ export function createLevel() {
 	perforationContainer.addChild(perforationGraphic)
 	addShape(400, 180, Shapes.triangleIso(60, 120))
 	addShape(500, 250, Shapes.square(100).rotate(-15))
-	addShape(630, 130, Shapes.star(180))
+	addShape(630, 130, Shapes.star(180).rotate(5))
 	addShape(750, 300, Shapes.zigZag(4, 50).rotate(-10))
 }
 

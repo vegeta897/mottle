@@ -52,6 +52,25 @@ export class Vector2 {
 		}
 	}
 	static fromComponent = componentToVector2
+	static round(vector: Vector2) {
+		return {
+			x: Math.round(vector.x),
+			y: Math.round(vector.y),
+		}
+	}
+	static new(x = 0, y = 0) {
+		return { x, y }
+	}
+	static assign(target: Vector2, source: Vector2) {
+		target.x = source.x
+		target.y = source.y
+	}
+	static fromAngle(length: number, angle: number) {
+		return {
+			x: length * Math.cos(angle),
+			y: length * Math.sin(angle),
+		}
+	}
 }
 
 export function clamp(val: number, min: number, max: number) {

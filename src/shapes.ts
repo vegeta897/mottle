@@ -22,41 +22,30 @@ export class ShapeCreationData {
 	getSegmentData(
 		origin: Vector2
 	): { start: Vector2; end: Vector2; angle: number }[] {
-		const segments: { start: Vector2; end: Vector2; angle: number }[] = []
-		let nextX = 0
-		let nextY = 0
-		let angle
-
-		for (const point of this.points) {
-			const start = {
-				x: Math.round(origin.x + nextX),
-				y: Math.round(origin.y + nextY),
-			}
-			if (this.rotation !== 0) {
-				const rotated = Vector2.rotate({ x: nextX, y: nextY }, this.rotation)
-				start.x = Math.round(origin.x + rotated.x)
-				start.y = Math.round(origin.y + rotated.y)
-			}
+		const nextPoint = Vector2.new()
+		let points = this.points.map((point) => {
+			let angle
 			if (point instanceof XYPoint) {
-				angle = Angle.fromVector(point)
-				nextX += point.x
-				nextY += point.y
+				angle = Angle.fromVector(point) + this.rotation
+				const delta =
+					this.rotation === 0 ? point : Vector2.rotate(point, this.rotation)
+				Vector2.assign(nextPoint, Vector2.add(nextPoint, delta))
 			} else {
-				angle = point.degrees * DEG_TO_RAD
-				nextX += point.distance * Math.cos(point.degrees * DEG_TO_RAD)
-				nextY += point.distance * Math.sin(point.degrees * DEG_TO_RAD)
+				angle = point.degrees * DEG_TO_RAD + this.rotation
+				Vector2.assign(
+					nextPoint,
+					Vector2.add(nextPoint, Vector2.fromAngle(point.distance, angle))
+				)
 			}
-			const end = {
-				x: Math.round(origin.x + nextX),
-				y: Math.round(origin.y + nextY),
-			}
-			if (this.rotation !== 0) {
-				angle += this.rotation
-				const rotated = Vector2.rotate({ x: nextX, y: nextY }, this.rotation)
-				end.x = Math.round(origin.x + rotated.x)
-				end.y = Math.round(origin.y + rotated.y)
-			}
-			segments.push({ start, end, angle })
+			return { ...nextPoint, angle }
+		})
+		const segments: { start: Vector2; end: Vector2; angle: number }[] = []
+		const previousPoint = Vector2.new()
+		for (const point of points) {
+			const start = Vector2.round(Vector2.add(origin, previousPoint))
+			Vector2.assign(previousPoint, point)
+			const end = Vector2.round(Vector2.add(origin, previousPoint))
+			segments.push({ start, end, angle: point.angle })
 		}
 		return segments
 	}
