@@ -1,20 +1,22 @@
 import {
 	addComponent,
-	Changed,
 	defineQuery,
+	hasComponent,
 	removeComponent,
 	System,
 } from 'bitecs'
 import {
 	AreaConstraint,
+	componentToVector2,
 	Drag,
 	Force,
 	Player,
 	setComponentXY,
 	Transform,
+	updateSpeed,
 	Velocity,
 } from './components'
-import { clamp, Vector2 } from '../util'
+import { Vector2 } from '../util'
 import InputManager from '../input'
 import { PixiApp } from '../pixi/pixi_app'
 import { player, playerLeft, playerRight, playerSprite } from '../'
@@ -24,16 +26,32 @@ import {
 	getSegmentStart,
 	getShapeAt,
 	Level,
+	updateLevel,
 } from '../level'
 import { paintLine } from '../paint'
 import '@pixi/math-extras'
 import { Point } from '@pixi/math'
 
+const { spriteContainer } = PixiApp.shared
+
+let levelScrollSpeed = 1 / 2
+let ticksPerScroll = Math.round(1 / levelScrollSpeed)
+let ticks = 0
+
+export const scrollSystem: System = (world) => {
+	ticks++
+	if (ticks % ticksPerScroll === 0) {
+		spriteContainer.x--
+		updateLevel()
+	}
+	return world
+}
+
 const { mouse } = InputManager.shared
 
 export const inputSystem: System = (world) => {
 	mouse.global = mouse.data.global
-	mouse.local = PixiApp.shared.toLocal(mouse.data.global)
+	mouse.local = spriteContainer.toLocal(mouse.data.global)
 	mouse.leftButton = mouse.startedInBounds && !!(mouse.data.buttons & 1)
 	mouse.rightButton = mouse.startedInBounds && !!(mouse.data.buttons & 2)
 	return world
@@ -41,39 +59,58 @@ export const inputSystem: System = (world) => {
 
 const ACCELERATION = 1
 
+// TODO: Idea: constantly scroll level to the left, constrain player to view, have to trace as many shapes as possible
+// Certain things cause camera to speed up, slow down, or stop
+// Risk of starting to trace a shape that you don't have time to complete
+// Canvas is like a big conveyor belt?
+
 export const playerSystem: System = (world) => {
 	if (!mouse.leftButton) {
 		removeComponent(world, Force, player)
 		return world
 	}
-	const delta = {
-		x: mouse.local.x - Transform.x[player],
-		y: mouse.local.y - Transform.y[player],
-	}
-	if (Level.segment) {
-		if (getSegmentEnd().x > Transform.x[player]) {
-			playerSprite.texture = playerRight
-		} else {
-			playerSprite.texture = playerLeft
-		}
+	const deltaPoint = new Point(
+		mouse.local.x - Transform.x[player],
+		mouse.local.y - Transform.y[player]
+	)
+	const aim = Level.segment ? getSegmentEnd().x : deltaPoint.x
+	const middle = Level.segment ? Transform.x[player] : 0
+	if (aim > middle) {
+		playerSprite.texture = playerRight
 	} else {
-		if (delta.x > 0) {
-			playerSprite.texture = playerRight
-		} else {
-			playerSprite.texture = playerLeft
-		}
+		playerSprite.texture = playerLeft
 	}
-	const deltaMagnitude = Vector2.getMagnitude(delta)
+	const deltaMagnitude = deltaPoint.magnitude()
 	if (deltaMagnitude < 16) {
 		removeComponent(world, Force, player)
 	} else {
-		const force = Vector2.normalize(
-			delta,
-			deltaMagnitude,
-			ACCELERATION * Math.min(1, (deltaMagnitude - 12) / 32)
-		)
-		addComponent(world, Force, player)
-		setComponentXY(Force, player, force)
+		deltaPoint.multiplyScalar(1 / deltaMagnitude, deltaPoint) // Normalize
+		const deltaFactor = Math.min(1, (deltaMagnitude - 12) / 32)
+		if (Level.segment) {
+			const forward = Math.max(
+				0,
+				Level.segment.parallelPoint.dot(deltaPoint) *
+					(Level.shape!.reverse ? -1 : 1)
+			)
+			const drift = Level.segment.perpendicularPoint.multiplyScalar(
+				Level.segment.perpendicularPoint.dot(deltaPoint) * 3
+			)
+			Level.segment.progress += forward * (7 / Level.segment.length)
+			const position = Vector2.add(
+				getSegmentStart(),
+				Level.segment.parallelPoint.multiplyScalar(
+					Level.segment.length *
+						Level.segment.progress *
+						(Level.shape!.reverse ? -1 : 1)
+				),
+				drift
+			)
+			setComponentXY(Transform, player, position)
+		} else {
+			addComponent(world, Force, player)
+			const force = deltaPoint.multiplyScalar(ACCELERATION * deltaFactor)
+			setComponentXY(Force, player, force)
+		}
 	}
 	return world
 }
@@ -86,8 +123,8 @@ export const forceSystem: System = (world) => {
 			x: Velocity.x[eid] + Force.x[eid],
 			y: Velocity.y[eid] + Force.y[eid],
 		}
-		Velocity.speed[eid] = Vector2.getMagnitude(newVelocity)
 		setComponentXY(Velocity, eid, newVelocity)
+		updateSpeed(eid)
 	}
 	return world
 }
@@ -96,21 +133,19 @@ const velocityQuery = defineQuery([Transform, Velocity])
 
 export const velocitySystem: System = (world) => {
 	for (let eid of velocityQuery(world)) {
-		if (eid === player && Level.segment) {
-			// TODO: Allow slight deviation from path
-			const toNextPoint = Vector2.subtract(getSegmentEnd(), {
-				x: Transform.x[eid],
-				y: Transform.y[eid],
-			})
-			const velocityPoint = new Point(Velocity.x[eid], Velocity.y[eid])
-			const projected = velocityPoint.project(toNextPoint)
-			Velocity.x[eid] = clamp(projected.x, 0, toNextPoint.x)
-			Velocity.y[eid] = clamp(projected.y, 0, toNextPoint.y)
-			Velocity.speed[eid] = Vector2.getMagnitude({
-				x: Velocity.x[eid],
-				y: Velocity.y[eid],
-			})
-		}
+		// if (eid === player && Level.segment) {
+		// 	// TODO: Allow slight deviation from path
+		// 	// TODO: Move this to player system, only allow force along target vector so momentum is always kept even if aim is bad
+		// 	const toNextPoint = Vector2.subtract(getSegmentEnd(), {
+		// 		x: Transform.x[eid],
+		// 		y: Transform.y[eid],
+		// 	})
+		// 	const velocityPoint = new Point(Velocity.x[eid], Velocity.y[eid])
+		// 	const projected = velocityPoint.project(toNextPoint)
+		// 	Velocity.x[eid] = clamp(projected.x, 0, toNextPoint.x)
+		// 	Velocity.y[eid] = clamp(projected.y, 0, toNextPoint.y)
+		// 	updateSpeed(eid)
+		// }
 		Transform.x[eid] += Velocity.x[eid]
 		Transform.y[eid] += Velocity.y[eid]
 	}
@@ -130,72 +165,83 @@ export const dragSystem: System = (world) => {
 		} else {
 			Velocity.x[eid] *= 1 - Drag.rate[eid]
 			Velocity.y[eid] *= 1 - Drag.rate[eid]
-			Velocity.speed[eid] = Vector2.getMagnitude({
-				x: Velocity.x[eid],
-				y: Velocity.y[eid],
-			})
+			updateSpeed(eid)
 		}
 	}
 	return world
 }
 
-const areaConstraintQuery = defineQuery([Changed(Transform), AreaConstraint])
+const areaConstraintQuery = defineQuery([Transform, AreaConstraint])
 
 export const areaConstraintSystem: System = (world) => {
 	for (let eid of areaConstraintQuery(world)) {
-		Transform.x[eid] = clamp(
-			Transform.x[eid],
-			AreaConstraint.left[eid] + Transform.width[eid] / 2,
-			AreaConstraint.right[eid] - Transform.width[eid] / 2
-		)
-		Transform.y[eid] = clamp(
-			Transform.y[eid],
-			AreaConstraint.top[eid] + Transform.height[eid] / 2,
-			AreaConstraint.bottom[eid] - Transform.height[eid] / 2
-		)
+		const global = spriteContainer.toGlobal(componentToVector2(Transform, eid))
+		const clamped = Vector2.applyAreaConstraint(global, eid)
+		if (!Vector2.equals(global, clamped)) {
+			if (eid === player && Level.shape) {
+				if (global.x < clamped.x) {
+					// Fallen behind
+					Level.shape.complete = true
+					Player.painting[player] = 0
+					Level.shape = null
+					Level.segment = null
+					addComponent(world, Velocity, player)
+				} else if (global.x > clamped.x) {
+					// Ahead
+					spriteContainer.x -= Math.ceil(global.x - clamped.x)
+				}
+			}
+			if (hasComponent(world, Velocity, eid)) {
+				if (clamped.x !== global.x) Velocity.x[eid] = levelScrollSpeed
+				if (clamped.y !== global.y) Velocity.y[eid] = 0
+				updateSpeed(eid)
+			}
+		}
+		setComponentXY(Transform, eid, spriteContainer.toLocal(clamped))
 	}
 	return world
 }
 
 export const shapeSystem: System = (world) => {
 	if (Level.shape && Level.segment) {
+		// TODO: Cancel shape if player no longer on segment
 		// Replace this with length travelled check
-		const nextPoint = new Point().copyFrom(getSegmentEnd())
-		const pointFromPlayer = nextPoint.subtract({
-			x: Transform.x[player],
-			y: Transform.y[player],
-		})
-		if (pointFromPlayer.magnitudeSquared() < 144) {
+		if (Level.segment.progress >= 1) {
 			Level.segment.complete = true
 			const nextSegment = getNextSegment()
 			if (nextSegment && !nextSegment.complete) {
 				Level.segment = nextSegment
 				setComponentXY(Transform, player, getSegmentStart())
+				setComponentXY(Velocity, player, { x: 0, y: 0 })
+				Velocity.speed[player] = 0
 			} else {
 				// Shape complete
 				Level.shape.complete = true
-				paintLine(getSegmentEnd(), false, 20)
+				paintLine(componentToVector2(Transform, player), false, 20)
 				Player.painting[player] = 0
-				Drag.rate[player] = 0.2
 				Level.shape = null
 				Level.segment = null
+				addComponent(world, Velocity, player)
 			}
 		}
 	} else if (
 		Velocity.speed[player] > 0 &&
 		getShapeAt(
-			{ x: Transform.x[player], y: Transform.y[player] },
-			{ x: Velocity.x[player], y: Velocity.y[player] }
+			componentToVector2(Transform, player),
+			componentToVector2(Velocity, player)
 		)
 	) {
+		// Start shape
 		Player.painting[player] = 1
-		Drag.rate[player] = 0.1
+		// Drag.rate[player] = 0.1
+		removeComponent(world, Force, player)
+		removeComponent(world, Velocity, player)
 		setComponentXY(Transform, player, Level.shape!.start)
 	}
 
 	if (Player.painting[player] > 0) {
 		paintLine(
-			{ x: Transform.x[player], y: Transform.y[player] },
+			componentToVector2(Transform, player),
 			Player.painting[player] === 1,
 			20
 		)

@@ -1,14 +1,18 @@
-import { Changed, defineQuery, System } from 'bitecs'
+import { Changed, defineQuery, enterQuery, System } from 'bitecs'
 import { DisplayObject, Transform } from './components'
 import { DisplayObjects } from '../pixi/object_manager'
 
 const spriteQuery = defineQuery([Changed(Transform), DisplayObject])
+const newSprites = enterQuery(spriteQuery)
+
+function updateSprite(eid: number) {
+	DisplayObjects[eid].x = Math.floor(Transform.x[eid])
+	DisplayObjects[eid].y = Math.floor(Transform.y[eid])
+}
 
 export const spriteSystem: System = (world) => {
-	for (let eid of spriteQuery(world)) {
-		DisplayObjects[eid].x = Math.floor(Transform.x[eid])
-		DisplayObjects[eid].y = Math.floor(Transform.y[eid])
-	}
+	newSprites(world).forEach(updateSprite)
+	spriteQuery(world).forEach(updateSprite)
 	return world
 }
 

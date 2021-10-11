@@ -1,10 +1,11 @@
-// TODO: Use @pixi/math-extras
-
-import { Transform } from './ecs/components'
+import { AreaConstraint, componentToVector2, Transform } from './ecs/components'
 import { PI_2 } from 'pixi.js'
 import { differenceAngles } from 'yy-angle'
 
+// When PIXI.Point doesn't cut it
 export class Vector2 {
+	x: number
+	y: number
 	static getMagnitude({ x, y }: Vector2) {
 		return Math.sqrt(x ** 2 + y ** 2)
 	}
@@ -15,11 +16,9 @@ export class Vector2 {
 		if (!magnitude) magnitude = Vector2.getMagnitude({ x, y })
 		return { x: (x / magnitude) * scalar, y: (y / magnitude) * scalar }
 	}
-	static multiply({ x, y }: Vector2, scalar: number) {
+	static multiplyScalar({ x, y }: Vector2, scalar: number) {
 		return { x: x * scalar, y: y * scalar }
 	}
-	x: number
-	y: number
 	static toString({ x, y }: Vector2) {
 		return x + ':' + y
 	}
@@ -32,12 +31,27 @@ export class Vector2 {
 			y: x * Math.sin(radians) + y * Math.cos(radians),
 		}
 	}
-	static subtract(
-		{ x: x1, y: y1 }: Vector2,
-		{ x: x2, y: y2 }: Vector2
-	): Vector2 {
-		return { x: x1 - x2, y: y1 - y2 }
+	static getAngle({ x, y }: Vector2) {
+		return Math.atan2(y, x)
 	}
+	static subtract(v1: Vector2, v2: Vector2): Vector2 {
+		return { x: v1.x - v2.x, y: v1.y - v2.y }
+	}
+	static add(...vectors: Vector2[]): Vector2 {
+		const result = { ...vectors[0] }
+		for (let i = 1; i < vectors.length; i++) {
+			result.x += vectors[i].x
+			result.y += vectors[i].y
+		}
+		return result
+	}
+	static applyAreaConstraint(vector: Vector2, eid: number) {
+		return {
+			x: clamp(vector.x, AreaConstraint.left[eid], AreaConstraint.right[eid]),
+			y: clamp(vector.y, AreaConstraint.top[eid], AreaConstraint.bottom[eid]),
+		}
+	}
+	static fromComponent = componentToVector2
 }
 
 export function clamp(val: number, min: number, max: number) {
@@ -96,4 +110,7 @@ export function easeInSine(x: number): number {
 }
 export function easeOutSine(x: number): number {
 	return Math.sin((x * Math.PI) / 2)
+}
+export function easeInExpo(x: number): number {
+	return x === 0 ? 0 : 2 ** (10 * x - 10)
 }

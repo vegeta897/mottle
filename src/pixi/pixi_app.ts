@@ -47,8 +47,8 @@ export class PixiApp {
 		// this.stage.addChild(this.viewport)
 		//
 		this.stage.addChild(this.spriteContainer)
-		this.stage.x = SCREEN_WIDTH / 2
-		this.stage.y = SCREEN_HEIGHT / 2
+		// this.spriteContainer.x = SCREEN_WIDTH / 2
+		// this.spriteContainer.y = SCREEN_HEIGHT / 2
 
 		// Pixi inspector
 		;(window as any).__PIXI_INSPECTOR_GLOBAL_HOOK__?.register({ PIXI: PIXI })
@@ -56,8 +56,5 @@ export class PixiApp {
 
 	static get shared() {
 		return PixiApp._shared
-	}
-	toLocal({ x, y }: { x: number; y: number }) {
-		return { x: x - this.stage.x, y: y - this.stage.y }
 	}
 }

@@ -10,9 +10,20 @@ export function setComponentXY(
 	component: ComponentType<typeof Vector2C>,
 	entity: number,
 	{ x, y }: Vector2
-) {
+): void {
 	component.x[entity] = x
 	component.y[entity] = y
+}
+
+export function componentToVector2(
+	component: ComponentType<typeof Vector2C>,
+	entity: number
+): Vector2 {
+	return { x: component.x[entity], y: component.y[entity] }
+}
+
+export function updateSpeed(eid: number) {
+	Velocity.speed[eid] = Vector2.getMagnitude(componentToVector2(Velocity, eid))
 }
 
 // TODO: Move to singleton object

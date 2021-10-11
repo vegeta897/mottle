@@ -1,13 +1,20 @@
-import { PixiApp } from './pixi/pixi_app'
+import { PixiApp, SCREEN_HEIGHT } from './pixi/pixi_app'
 import { Angle, Vector2 } from './util'
-import { Container, Graphics } from 'pixi.js'
+import { Container, Graphics, Point } from 'pixi.js'
 import { DEG_TO_RAD } from '@pixi/math'
 import { DashLine } from 'pixi-dashed-line'
+import * as PIXI from 'pixi.js'
+import { AreaConstraint } from './ecs/components'
+import { player } from './index'
+import { PointLocation, Shapes, XYPoint } from './shapes'
 
-const { stage } = PixiApp.shared
+const { spriteContainer } = PixiApp.shared
 
-const shapeContainer: Container = new Container()
-stage.addChildAt(shapeContainer, 0)
+const shapeContainer = new Container()
+spriteContainer.addChildAt(shapeContainer, 0)
+const perforationContainer = new Container()
+perforationContainer.y = 1
+spriteContainer.addChildAt(perforationContainer, 0)
 
 const MAX_DIST = 20
 const MAX_ANGLE = 20 * DEG_TO_RAD
@@ -27,6 +34,10 @@ type Segment = {
 	angle: number
 	complete: boolean
 	direction: SEGMENT_DIR
+	parallelPoint: Point
+	perpendicularPoint: Point
+	progress: number
+	drift: number
 	next?: Segment
 	previous?: Segment
 }
@@ -41,16 +52,6 @@ type Shape = {
 	contiguous: boolean
 	rotation: number
 }
-
-class AngledPoint {
-	constructor(public degrees: number, public distance: number) {}
-}
-
-class XYPoint {
-	constructor(public x: number, public y: number) {}
-}
-
-type PointLocation = AngledPoint | XYPoint
 
 const shapes: Shape[] = []
 
@@ -85,9 +86,11 @@ function addShape(
 	pointsGraphic.drawCircle(x, y, 6)
 	const linesGraphic = new Graphics()
 	const dashedLines = new DashLine(linesGraphic, {
-		dash: [12, 8],
-		width: 3,
+		dash: [10.08, 14.08], // Decimals for irregular rasterization
+		width: 5,
 		color: GUIDE_COLOR,
+		cap: PIXI.LINE_CAP.ROUND,
+		join: PIXI.LINE_JOIN.ROUND,
 	})
 	dashedLines.moveTo(x, y)
 	let nextX = 0
@@ -101,6 +104,8 @@ function addShape(
 			start.x = x + rotated.x
 			start.y = y + rotated.y
 		}
+		start.x = Math.round(start.x)
+		start.y = Math.round(start.y)
 		if (point instanceof XYPoint) {
 			angle = Angle.fromVector(point)
 			nextX += point.x
@@ -117,16 +122,30 @@ function addShape(
 			end.x = x + rotated.x
 			end.y = y + rotated.y
 		}
+		end.x = Math.round(end.x)
+		end.y = Math.round(end.y)
 		dashedLines.lineTo(end.x, end.y)
 		pointsGraphic.drawCircle(end.x, end.y, 6)
+		const parallelPoint = new Point(
+			end.x - start.x,
+			end.y - start.y
+		).normalize()
+		const perpendicularVector2 = Vector2.rotate(parallelPoint, Math.PI / 2)
 		const segment: Segment = {
 			start,
 			end,
 			angle,
+			parallelPoint,
+			perpendicularPoint: new Point(
+				perpendicularVector2.x,
+				perpendicularVector2.y
+			),
 			direction: shape.contiguous
 				? SEGMENT_DIR.BIDIRECTIONAL
 				: SEGMENT_DIR.NONE,
 			complete: false,
+			progress: 0,
+			drift: 0,
 			length: Vector2.getMagnitude(Vector2.subtract(end, start)),
 		}
 		if (previousSegment) {
@@ -150,6 +169,11 @@ function addShape(
 			segment.direction = SEGMENT_DIR.END_TO_START
 		}
 		previousSegment = segment
+		if (
+			end.y < AreaConstraint.top[player] ||
+			end.y > AreaConstraint.bottom[player]
+		)
+			throw `Shape point [${end.x},${end.y}] out of bounds!`
 	}
 	if (shape.contiguous) {
 		shape.segments[0].previous = previousSegment!
@@ -159,47 +183,26 @@ function addShape(
 	shapeContainer.addChild(linesGraphic)
 }
 
+const PERFORATION_GAP = 256
+let nextPerforationX = -128
+
 export function createLevel() {
-	// Triangle
-	addShape(80, -20, [
-		new XYPoint(60, -120),
-		new XYPoint(60, 120),
-		new XYPoint(-120, 0),
-	])
-	// Square
-	addShape(
-		-80,
-		-20,
-		[
-			new XYPoint(-100, 0),
-			new XYPoint(0, -100),
-			new XYPoint(100, 0),
-			new XYPoint(0, 100),
-		],
-		{ rotate: -15 }
-	)
-	// Star
-	const starSize = 180
-	addShape(80, 80, [
-		new AngledPoint(36, starSize),
-		new AngledPoint(-108, starSize),
-		new AngledPoint(108, starSize),
-		new AngledPoint(-36, starSize),
-		new AngledPoint(-180, starSize),
-	])
-	// Zig-zag
-	const zigLength = 50
-	addShape(
-		-20,
-		130,
-		[
-			new XYPoint(-zigLength, zigLength),
-			new XYPoint(-zigLength, -zigLength),
-			new XYPoint(-zigLength, zigLength),
-			new XYPoint(-zigLength, -zigLength),
-		],
-		{ contiguous: false, rotate: 20 }
-	)
+	const perforationGraphic = new Graphics()
+	const dashedLines = new DashLine(perforationGraphic, {
+		dash: [2, 2],
+		width: 2,
+		color: 0xf4e3b9,
+	})
+	for (let i = 0; i < 3; i++) {
+		dashedLines.moveTo(nextPerforationX, 0)
+		dashedLines.lineTo(nextPerforationX, SCREEN_HEIGHT)
+		nextPerforationX += PERFORATION_GAP
+	}
+	perforationContainer.addChild(perforationGraphic)
+	addShape(400, 180, Shapes.triangleIso(60, 120))
+	addShape(500, 250, Shapes.square(100), { rotate: -15 })
+	addShape(630, 130, Shapes.star(180))
+	addShape(750, 300, Shapes.zigZag(4, 50), { contiguous: false, rotate: -10 })
 }
 
 export function getShapeAt(position: Vector2, velocity: Vector2) {
@@ -253,4 +256,9 @@ export function getSegmentEnd() {
 }
 export function getNextSegment() {
 	return Level.shape!.reverse ? Level.segment!.previous : Level.segment!.next
+}
+
+export function updateLevel() {
+	if (spriteContainer.toGlobal(perforationContainer).x < 0)
+		perforationContainer.x += PERFORATION_GAP
 }

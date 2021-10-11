@@ -1,11 +1,8 @@
 import type { DisplayObject } from 'pixi.js'
-import { Container, Graphics } from 'pixi.js'
+import { Graphics } from 'pixi.js'
 import { PixiApp } from './pixi_app'
 
 export const DisplayObjects: DisplayObject[] = [] // Indexed by entity ID
-
-const splatContainer: Container = new Container()
-PixiApp.shared.stage.addChildAt(splatContainer, 0)
 
 // const { height } = PixiApp.shared.application.view
 
@@ -18,4 +15,4 @@ axis.lineTo(1, 24)
 axis.beginFill(0xe6a67c)
 axis.lineStyle({ width: 0 })
 axis.drawRect(0, 0, 1, 1)
-splatContainer.addChild(axis)
+PixiApp.shared.stage.addChild(axis)

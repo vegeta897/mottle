@@ -3,12 +3,10 @@ import * as PIXI from 'pixi.js'
 import { PixiApp } from './pixi/pixi_app'
 import { Vector2 } from './util'
 
-const { stage } = PixiApp.shared
-
 const LINE_POINT_DIST = 4
 
 const paintContainer: Container = new Container()
-stage.addChildAt(paintContainer, 1)
+PixiApp.shared.spriteContainer.addChildAt(paintContainer, 2)
 
 let currentLine: Graphics | null = null
 let lastPoint: Vector2 | null = null
@@ -37,9 +35,3 @@ export function paintLine(
 		lastPoint = { x, y }
 	}
 }
-
-const SPLAT_SIZE = 6
-
-const floorPaintContainer: Container = new Container()
-floorPaintContainer.setTransform(SPLAT_SIZE / 2, SPLAT_SIZE / 2)
-stage.addChildAt(floorPaintContainer, 0)

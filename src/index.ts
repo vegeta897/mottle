@@ -2,6 +2,7 @@ import './style.css'
 import Game from './game'
 import { addComponent, addEntity } from 'bitecs'
 import {
+	AreaConstraint,
 	DisplayObject,
 	Drag,
 	Player,
@@ -10,7 +11,7 @@ import {
 	Velocity,
 } from './ecs/components'
 import { Sprite, Texture, Loader } from 'pixi.js'
-import { PixiApp } from './pixi/pixi_app'
+import { PixiApp, SCREEN_HEIGHT, SCREEN_WIDTH } from './pixi/pixi_app'
 import { DisplayObjects } from './pixi/object_manager'
 import { createLevel } from './level'
 
@@ -36,17 +37,17 @@ async function startGame() {
 	addComponent(game.world, Player, player)
 	Player.painting[player] = 0
 	addComponent(game.world, Transform, player)
-	setComponentXY(Transform, player, { x: 0, y: 0 })
+	setComponentXY(Transform, player, { x: 200, y: SCREEN_HEIGHT / 2 })
 	Transform.width[player] = 28
 	Transform.height[player] = 24
 	addComponent(game.world, Velocity, player)
 	addComponent(game.world, Drag, player)
 	Drag.rate[player] = 0.2
-	// addComponent(game.world, AreaConstraint, player)
-	// AreaConstraint.top[player] = 12
-	// AreaConstraint.left[player] = -12
-	// AreaConstraint.bottom[player] = 264
-	// AreaConstraint.right[player] = 4080
+	addComponent(game.world, AreaConstraint, player)
+	AreaConstraint.top[player] = 38
+	AreaConstraint.left[player] = 24
+	AreaConstraint.bottom[player] = SCREEN_HEIGHT - 12
+	AreaConstraint.right[player] = SCREEN_WIDTH - 24
 	addComponent(game.world, DisplayObject, player)
 
 	playerSprite = new Sprite(playerRight)
