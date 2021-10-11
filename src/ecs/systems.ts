@@ -16,7 +16,7 @@ import {
 	updateSpeed,
 	Velocity,
 } from './components'
-import { Vector2 } from '../util'
+import { easeOutCubic, Vector2 } from '../util'
 import InputManager from '../input'
 import { PixiApp } from '../pixi/pixi_app'
 import { player, playerLeft, playerRight, playerSprite } from '../'
@@ -91,8 +91,10 @@ export const playerSystem: System = (world) => {
 				Level.segment.parallelPoint.dot(deltaPoint) *
 					(Level.shape!.reverse ? -1 : 1)
 			)
-			const drift = Level.segment.perpendicularPoint.multiplyScalar(
-				Level.segment.perpendicularPoint.dot(deltaPoint) * 3
+			const drift = Level.segment.perpendicularPoint.dot(deltaPoint)
+			const driftAmount = easeOutCubic(Math.abs(drift))
+			const driftPoint = Level.segment.perpendicularPoint.multiplyScalar(
+				drift * driftAmount * 4
 			)
 			Level.segment.progress += forward * (7 / Level.segment.length)
 			const position = Vector2.add(
@@ -102,7 +104,7 @@ export const playerSystem: System = (world) => {
 						Level.segment.progress *
 						(Level.shape!.reverse ? -1 : 1)
 				),
-				drift
+				driftPoint
 			)
 			setComponentXY(Transform, player, position)
 		} else {
