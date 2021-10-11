@@ -59,7 +59,6 @@ export const inputSystem: System = (world) => {
 
 const ACCELERATION = 1
 
-// TODO: Idea: constantly scroll level to the left, constrain player to view, have to trace as many shapes as possible
 // Certain things cause camera to speed up, slow down, or stop
 // Risk of starting to trace a shape that you don't have time to complete
 // Canvas is like a big conveyor belt?
@@ -133,19 +132,6 @@ const velocityQuery = defineQuery([Transform, Velocity])
 
 export const velocitySystem: System = (world) => {
 	for (let eid of velocityQuery(world)) {
-		// if (eid === player && Level.segment) {
-		// 	// TODO: Allow slight deviation from path
-		// 	// TODO: Move this to player system, only allow force along target vector so momentum is always kept even if aim is bad
-		// 	const toNextPoint = Vector2.subtract(getSegmentEnd(), {
-		// 		x: Transform.x[eid],
-		// 		y: Transform.y[eid],
-		// 	})
-		// 	const velocityPoint = new Point(Velocity.x[eid], Velocity.y[eid])
-		// 	const projected = velocityPoint.project(toNextPoint)
-		// 	Velocity.x[eid] = clamp(projected.x, 0, toNextPoint.x)
-		// 	Velocity.y[eid] = clamp(projected.y, 0, toNextPoint.y)
-		// 	updateSpeed(eid)
-		// }
 		Transform.x[eid] += Velocity.x[eid]
 		Transform.y[eid] += Velocity.y[eid]
 	}
@@ -204,8 +190,6 @@ export const areaConstraintSystem: System = (world) => {
 
 export const shapeSystem: System = (world) => {
 	if (Level.shape && Level.segment) {
-		// TODO: Cancel shape if player no longer on segment
-		// Replace this with length travelled check
 		if (Level.segment.progress >= 1) {
 			Level.segment.complete = true
 			const nextSegment = getNextSegment()
