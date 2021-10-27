@@ -3,55 +3,72 @@ import { Angle, Vector2 } from './util'
 
 class AngledPoint {
 	constructor(public degrees: number, public distance: number) {}
+	get angle() {
+		return this.degrees * DEG_TO_RAD
+	}
+	applyTo(point: Vector2, rotation = 0) {
+		const angle = this.angle + rotation
+		Vector2.assign(
+			point,
+			Vector2.add(point, Vector2.fromAngle(this.distance, angle))
+		)
+	}
 }
 
 class XYPoint {
 	constructor(public x: number, public y: number) {}
+	get angle() {
+		return Angle.fromVector(this)
+	}
+	applyTo(point: Vector2, rotation = 0) {
+		Vector2.assign(point, Vector2.add(point, Vector2.rotate(this, rotation)))
+	}
 }
 
 export class ShapeCreationData {
-	public boundingBox = new Rectangle()
+	private _boundingBox = new Rectangle()
+	public get boundingBox(): Rectangle {
+		if (this.dirty) this.calculateBoundingBox()
+		return this._boundingBox
+	}
 	public rotation = 0
+	public origin = Vector2.new()
+	private dirty = true
 	constructor(
-		private points: (AngledPoint | XYPoint)[],
+		private pointSpecs: (AngledPoint | XYPoint)[],
 		public contiguous: boolean = true
 	) {}
 	rotate(degrees: number) {
 		this.rotation = degrees * DEG_TO_RAD
+		this.dirty = true
 		return this
 	}
-	getSegmentData(
-		origin: Vector2
-	): { start: Vector2; end: Vector2; angle: number }[] {
-		this.boundingBox.x = origin.x
-		this.boundingBox.y = origin.y
+	move(moveTo: Vector2) {
+		const delta = Vector2.subtract(moveTo, this.origin)
+		Vector2.assign(this._boundingBox, Vector2.add(this._boundingBox, delta))
+		Vector2.assign(this.origin, moveTo)
+		return this
+	}
+	private calculateBoundingBox() {
 		const nextPoint = Vector2.new()
-		let points = this.points.map((point) => {
-			let angle
-			if (point instanceof XYPoint) {
-				angle = Angle.fromVector(point) + this.rotation
-				Vector2.assign(
-					nextPoint,
-					Vector2.add(nextPoint, Vector2.rotate(point, this.rotation))
-				)
-			} else {
-				angle = point.degrees * DEG_TO_RAD + this.rotation
-				Vector2.assign(
-					nextPoint,
-					Vector2.add(nextPoint, Vector2.fromAngle(point.distance, angle))
-				)
-			}
-			return { ...nextPoint, angle }
+		this.pointSpecs.forEach((pointSpec) => {
+			pointSpec.applyTo(nextPoint, this.rotation)
+			const global = Vector2.round(Vector2.add(this.origin, nextPoint))
+			this._boundingBox.enlarge(new Rectangle(global.x, global.y))
 		})
+		this.dirty = false
+	}
+	getSegmentData(): { start: Vector2; end: Vector2; angle: number }[] {
 		const segments: { start: Vector2; end: Vector2; angle: number }[] = []
 		const previousPoint = Vector2.new()
-		for (const point of points) {
-			const start = Vector2.round(Vector2.add(origin, previousPoint))
-			Vector2.assign(previousPoint, point)
-			const end = Vector2.round(Vector2.add(origin, previousPoint))
-			this.boundingBox.enlarge(new Rectangle(end.x, end.y))
-			segments.push({ start, end, angle: point.angle })
-		}
+		const nextPoint = Vector2.new()
+		this.pointSpecs.forEach((pointSpec) => {
+			pointSpec.applyTo(nextPoint, this.rotation)
+			const start = Vector2.round(Vector2.add(this.origin, previousPoint))
+			Vector2.assign(previousPoint, nextPoint)
+			const end = Vector2.round(Vector2.add(this.origin, previousPoint))
+			segments.push({ start, end, angle: pointSpec.angle + this.rotation })
+		})
 		return segments
 	}
 }
@@ -59,9 +76,9 @@ export class ShapeCreationData {
 export const Shapes = {
 	triangleIso(width: number, height: number) {
 		return new ShapeCreationData([
-			new XYPoint(width, -height),
-			new XYPoint(width, height),
-			new XYPoint(-height, 0),
+			new XYPoint(width / 2, -height),
+			new XYPoint(width / 2, height),
+			new XYPoint(-width, 0),
 		])
 	},
 	square(size: number) {

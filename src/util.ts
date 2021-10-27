@@ -64,6 +64,7 @@ export class Vector2 {
 	static assign(target: Vector2, source: Vector2) {
 		target.x = source.x
 		target.y = source.y
+		return target
 	}
 	static fromAngle(length: number, angle: number) {
 		return {

@@ -206,21 +206,20 @@ export const areaConstraintSystem: System = (world) => {
 		const global = spriteContainer.toGlobal(componentToVector2(Transform, eid))
 		const clamped = Vector2.applyAreaConstraint(global, eid)
 		if (!Vector2.equals(global, clamped)) {
-			if (eid === player && Level.shape) {
-				if (global.x < clamped.x) {
-					// Fallen behind
-					Level.shape.complete = true
-					Player.painting[player] = 0
-					Level.shape = null
-					Level.segment = null
-					addComponent(world, Velocity, player)
-				} else if (global.x > clamped.x) {
-					// Ahead
-					spriteContainer.x -= Math.ceil(global.x - clamped.x)
-				}
+			if (eid === player && Level.shape && global.x < clamped.x) {
+				// Fallen behind while painting
+				Level.shape.complete = true
+				Player.painting[player] = 0
+				Level.shape = null
+				Level.segment = null
+				addComponent(world, Velocity, player)
+			}
+			if (global.x > clamped.x) {
+				// Ahead
+				spriteContainer.x -= Math.ceil(global.x - clamped.x)
 			}
 			if (hasComponent(world, Velocity, eid)) {
-				if (clamped.x !== global.x) Velocity.x[eid] = levelScrollSpeed
+				if (global.x < clamped.x) Velocity.x[eid] = levelScrollSpeed
 				if (clamped.y !== global.y) Velocity.y[eid] = 0
 				updateSpeed(eid)
 			}
@@ -258,6 +257,7 @@ export const shapeSystem: System = (world) => {
 			Player.painting[player] = 1
 		}
 	} else if (
+		mouse.leftButton &&
 		Velocity.speed[player] > 0 &&
 		getShapeAt(
 			componentToVector2(Transform, player),

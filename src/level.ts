@@ -7,6 +7,7 @@ import * as PIXI from 'pixi.js'
 import { AreaConstraint } from './ecs/components'
 import { player } from './'
 import { ShapeCreationData, Shapes } from './shapes'
+import Prando from 'prando'
 
 const { spriteContainer } = PixiApp.shared
 
@@ -60,19 +61,21 @@ export const Level: { shape: null | Shape; segment: null | Segment } = {
 	segment: null,
 }
 
-function addShape(x: number, y: number, data: ShapeCreationData) {
+function addShape(data: ShapeCreationData) {
 	const shape: Shape = {
 		segments: [],
 		startingSegments: [],
 		reverse: false,
 		complete: false,
-		...data,
-		start: { x, y },
+		boundingBox: data.boundingBox,
+		rotation: data.rotation,
+		contiguous: data.contiguous,
+		start: data.origin,
 	}
 	shapes.add(shape)
 	const pointsGraphic = new Graphics()
 	pointsGraphic.beginFill(GUIDE_COLOR)
-	pointsGraphic.drawCircle(x, y, 4)
+	pointsGraphic.drawCircle(shape.start.x, shape.start.y, 4)
 	const linesGraphic = new Graphics()
 	const dashedLines = new DashLine(linesGraphic, {
 		dash: [10.08, 14.08], // Decimals for irregular rasterization
@@ -81,9 +84,9 @@ function addShape(x: number, y: number, data: ShapeCreationData) {
 		cap: PIXI.LINE_CAP.ROUND,
 		join: PIXI.LINE_JOIN.ROUND,
 	})
-	dashedLines.moveTo(x, y)
+	dashedLines.moveTo(shape.start.x, shape.start.y)
 	let previousSegment: Segment | null = null
-	const segmentDataList = data.getSegmentData({ x, y })
+	const segmentDataList = data.getSegmentData()
 	for (const segmentData of segmentDataList) {
 		dashedLines.lineTo(segmentData.end.x, segmentData.end.y)
 		pointsGraphic.drawCircle(segmentData.end.x, segmentData.end.y, 4)
@@ -145,7 +148,6 @@ function addShape(x: number, y: number, data: ShapeCreationData) {
 }
 
 const PERFORATION_GAP = 256
-let nextPerforationX = -128
 
 export function createLevel() {
 	const perforationGraphic = new Graphics()
@@ -154,16 +156,40 @@ export function createLevel() {
 		width: 2,
 		color: 0xf4e3b9,
 	})
-	for (let i = 0; i < 3; i++) {
-		dashedLines.moveTo(nextPerforationX, 0)
-		dashedLines.lineTo(nextPerforationX, SCREEN_HEIGHT)
+	dashedLines.lineTo(0, SCREEN_HEIGHT)
+
+	let nextPerforationX = -PERFORATION_GAP / 2
+	perforationContainer.addChild(
+		perforationGraphic.setTransform(nextPerforationX)
+	)
+	for (let i = 0; i < 2; i++) {
 		nextPerforationX += PERFORATION_GAP
+		perforationContainer.addChild(
+			perforationGraphic.clone().setTransform(nextPerforationX)
+		)
 	}
-	perforationContainer.addChild(perforationGraphic)
-	addShape(400, 180, Shapes.triangleIso(60, 120))
-	addShape(500, 250, Shapes.square(100).rotate(-15))
-	addShape(630, 130, Shapes.star(180).rotate(5))
-	addShape(750, 300, Shapes.zigZag(4, 50).rotate(-10))
+	let nextX = 400
+	const rng = new Prando()
+	for (let i = 0; i < 50; i++) {
+		const shape = rng
+			.nextArrayItem([
+				() => Shapes.triangleIso(120, 120),
+				() => Shapes.square(100),
+				() => Shapes.star(180),
+				() => Shapes.zigZag(4, 50),
+			])()
+			.rotate(rng.nextInt(-180, 180))
+		let y = rng.nextInt(
+			AreaConstraint.top[player],
+			AreaConstraint.bottom[player] - shape.boundingBox.height
+		)
+		shape.move({
+			x: nextX - shape.boundingBox.left,
+			y: y - shape.boundingBox.top,
+		})
+		addShape(shape)
+		nextX += shape.boundingBox.width + rng.nextInt(20, 60)
+	}
 }
 
 export function getShapeAt(
