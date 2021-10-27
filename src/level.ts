@@ -178,7 +178,7 @@ export function createLevel() {
 				() => Shapes.star(180),
 				() => Shapes.zigZag(4, 50),
 			])()
-			.rotate(rng.nextInt(-180, 180))
+			.rotate(rng.nextInt(-60, 60))
 		let y = rng.nextInt(
 			AreaConstraint.top[player],
 			AreaConstraint.bottom[player] - shape.boundingBox.height
