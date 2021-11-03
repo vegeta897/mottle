@@ -173,10 +173,10 @@ export function createLevel() {
 	for (let i = 0; i < 50; i++) {
 		const shape = rng
 			.nextArrayItem([
-				() => Shapes.triangleIso(120, 120),
-				() => Shapes.square(100),
-				() => Shapes.star(180),
-				() => Shapes.zigZag(4, 50),
+				() => Shapes.triangleIso(rng.nextInt(80, 150), rng.nextInt(80, 150)),
+				() => Shapes.square(rng.nextInt(80, 130)),
+				() => Shapes.star(rng.nextInt(120, 160)),
+				() => Shapes.zigZag(rng.nextInt(3, 5), rng.nextInt(30, 60)),
 			])()
 			.rotate(rng.nextInt(-60, 60))
 		let y = rng.nextInt(
