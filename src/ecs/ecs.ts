@@ -9,8 +9,9 @@ import {
 	shapeSystem,
 	scrollSystem,
 	jumpSystem,
+	paintingSystem,
 } from './systems'
-import { Force } from './components'
+import { Force, Painting } from './components'
 import { cameraSystem, spriteSystem } from './render_systems'
 
 export default class ECS {
@@ -19,6 +20,7 @@ export default class ECS {
 		scrollSystem,
 		inputSystem,
 		playerSystem,
+		paintingSystem,
 		forceSystem,
 		jumpSystem,
 		velocitySystem,
@@ -28,6 +30,6 @@ export default class ECS {
 	)
 	renderPipeline = pipe(spriteSystem, cameraSystem)
 	constructor() {
-		registerComponents(this.world, [Force])
+		registerComponents(this.world, [Force, Painting])
 	}
 }

@@ -35,7 +35,6 @@ async function startGame() {
 	playerLeft = Texture.from('player-left')
 
 	addComponent(game.world, Player, player)
-	Player.painting[player] = 0
 	addComponent(game.world, Transform, player)
 	setComponentXY(Transform, player, { x: 200, y: SCREEN_HEIGHT / 2 })
 	Transform.z[player] = 0

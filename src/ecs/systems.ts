@@ -13,6 +13,7 @@ import {
 	Drag,
 	Force,
 	Jump,
+	Painting,
 	Player,
 	setComponentXY,
 	Transform,
@@ -62,63 +63,86 @@ export const inputSystem: System = (world) => {
 }
 
 const ACCELERATION = 1
+const PAINT_ACCEL = 0.5
+const MAX_PAINT_SPEED = 7
 
 // Certain things cause camera to speed up, slow down, or stop
 // Risk of starting to trace a shape that you don't have time to complete
 // Canvas is like a big conveyor belt?
 
 export const playerSystem: System = (world) => {
-	if (!mouse.leftButton || hasComponent(world, Jump, player)) {
-		removeComponent(world, Force, player)
-		return world
-	}
 	const deltaPoint = new Point(
 		mouse.local.x - Transform.x[player],
 		mouse.local.y - Transform.y[player]
 	)
+	setComponentXY(Player.pointerDelta, player, deltaPoint)
+	Player.pointerDelta.magnitude[player] = deltaPoint.magnitude()
+	if (!mouse.leftButton || hasComponent(world, Jump, player)) {
+		removeComponent(world, Force, player)
+		return world
+	}
 	const aim = Level.segment ? getSegmentEnd().x : deltaPoint.x
 	const middle = Level.segment ? Transform.x[player] : 0
-	if (aim > middle) {
-		playerSprite.texture = playerRight
-	} else {
-		playerSprite.texture = playerLeft
-	}
-	const deltaMagnitude = deltaPoint.magnitude()
+	playerSprite.texture = aim > middle ? playerRight : playerLeft
+	const deltaMagnitude = Player.pointerDelta.magnitude[player]
 	if (deltaMagnitude < 16) {
 		removeComponent(world, Force, player)
-	} else {
+	} else if (!hasComponent(world, Painting, player)) {
+		addComponent(world, Force, player)
 		deltaPoint.multiplyScalar(1 / deltaMagnitude, deltaPoint) // Normalize
 		const deltaFactor = Math.min(1, (deltaMagnitude - 12) / 32)
-		if (Level.segment) {
-			// TODO: Store forward momentum and drift momentum
-			const forward = Math.max(
-				0,
-				Level.segment.parallelPoint.dot(deltaPoint) *
-					(Level.shape!.reverse ? -1 : 1)
-			)
-			const drift = Level.segment.perpendicularPoint.dot(deltaPoint)
-			const driftAmount = cubicOut(Math.abs(drift) * deltaFactor)
-			const driftPoint = Level.segment.perpendicularPoint.multiplyScalar(
-				drift * driftAmount * 4
-			)
-			Level.segment.progress +=
-				forward * (7 / Level.segment.length) * deltaFactor
-			const position = Vector2.add(
-				getSegmentStart(),
-				Level.segment.parallelPoint.multiplyScalar(
-					Level.segment.length *
-						Level.segment.progress *
-						(Level.shape!.reverse ? -1 : 1)
-				),
-				driftPoint
-			)
-			setComponentXY(Transform, player, position)
-		} else {
-			addComponent(world, Force, player)
-			const force = deltaPoint.multiplyScalar(ACCELERATION * deltaFactor)
-			setComponentXY(Force, player, force)
-		}
+		const force = deltaPoint.multiplyScalar(ACCELERATION * deltaFactor)
+		setComponentXY(Force, player, force)
 	}
+	return world
+}
+
+export const paintingSystem: System = (world) => {
+	if (!hasComponent(world, Painting, player) || !Level.segment) return world
+	if (mouse.leftButton) {
+		const deltaPoint = new Point(
+			Player.pointerDelta.x[player],
+			Player.pointerDelta.y[player]
+		)
+		const deltaMagnitude = Player.pointerDelta.magnitude[player]
+		deltaPoint.multiplyScalar(1 / deltaMagnitude, deltaPoint) // Normalize
+		const deltaFactor = Math.min(1, (deltaMagnitude - 12) / 32)
+		const forward = Math.max(
+			0,
+			Level.segment.parallelPoint.dot(deltaPoint) *
+				(Level.shape!.reverse ? -1 : 1)
+		)
+		const drift = Level.segment.perpendicularPoint.dot(deltaPoint)
+		const driftAmount = cubicOut(Math.abs(drift) * deltaFactor)
+		Painting.drift[player] += drift * driftAmount
+		Painting.speed[player] = Math.min(
+			Painting.speed[player] + PAINT_ACCEL * forward * deltaFactor,
+			MAX_PAINT_SPEED
+		)
+	}
+
+	Level.segment.progress = Math.min(
+		1,
+		Level.segment.progress + Painting.speed[player] / Level.segment.length
+	)
+	Painting.speed[player] = Math.max(0, Painting.speed[player] - PAINT_ACCEL / 3)
+	const driftPoint = Level.segment.perpendicularPoint.multiplyScalar(
+		Painting.drift[player]
+	)
+	Painting.drift[player] *= 0.8
+	setComponentXY(
+		Transform,
+		player,
+		Vector2.add(
+			getSegmentStart(),
+			Level.segment.parallelPoint.multiplyScalar(
+				Level.segment.length *
+					Level.segment.progress *
+					(Level.shape!.reverse ? -1 : 1)
+			),
+			driftPoint
+		)
+	)
 	return world
 }
 
@@ -209,9 +233,9 @@ export const areaConstraintSystem: System = (world) => {
 			if (eid === player && Level.shape && global.x < clamped.x) {
 				// Fallen behind while painting
 				Level.shape.complete = true
-				Player.painting[player] = 0
 				Level.shape = null
 				Level.segment = null
+				removeComponent(world, Painting, player)
 				addComponent(world, Velocity, player)
 			}
 			if (global.x > clamped.x) {
@@ -234,27 +258,31 @@ export const areaConstraintSystem: System = (world) => {
 export const shapeSystem: System = (world) => {
 	const inverseSpeedFactor = 1 - Math.min(1, Velocity.speed[player] / 4)
 	if (Level.shape && Level.segment) {
-		if (Level.segment.progress >= 1) {
+		if (Level.segment.progress === 1) {
 			Level.segment.complete = true
 			const nextSegment = getNextSegment()
 			if (nextSegment && !nextSegment.complete) {
 				Level.segment = nextSegment
 				setComponentXY(Transform, player, getSegmentStart())
-				setComponentXY(Velocity, player, { x: 0, y: 0 })
-				Velocity.speed[player] = 0
+				Painting.speed[player] *= 0.5
 			} else {
 				// Shape complete
 				Level.shape.complete = true
 				paintLine(componentToVector2(Transform, player), false, 20)
-				Player.painting[player] = 0
+				Painting.ticks[player] = 0
+				removeComponent(world, Painting, player)
 				Level.shape = null
 				Level.segment = null
 			}
 		} else if (
-			Player.painting[player] === 0 &&
+			Painting.ticks[player] === 0 &&
 			!hasComponent(world, Jump, player)
 		) {
-			Player.painting[player] = 1
+			// Begin painting
+			addComponent(world, Painting, player)
+			Painting.speed[player] = 0
+			Painting.drift[player] = 0
+			Painting.ticks[player] = 1
 		}
 	} else if (
 		mouse.leftButton &&
@@ -274,13 +302,13 @@ export const shapeSystem: System = (world) => {
 		Jump.progress[player] = 0
 	}
 
-	if (Player.painting[player] > 0) {
+	if (Painting.ticks[player] > 0) {
 		paintLine(
 			componentToVector2(Transform, player),
-			Player.painting[player] === 1,
+			Painting.ticks[player] === 1,
 			20
 		)
-		Player.painting[player]++
+		Painting.ticks[player]++
 	}
 	return world
 }

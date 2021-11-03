@@ -27,7 +27,15 @@ export function updateSpeed(eid: number) {
 }
 
 // TODO: Move to singleton object
-export const Player = defineComponent({ painting: Types.ui32 })
+export const Player = defineComponent({
+	pointerDelta: { magnitude: Types.f32, ...Vector2C },
+})
+
+export const Painting = defineComponent({
+	ticks: Types.ui32,
+	speed: Types.f32,
+	drift: Types.f32,
+})
 
 export const Transform = defineComponent({
 	...Vector2C,
