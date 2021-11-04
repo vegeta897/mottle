@@ -10,7 +10,7 @@ import {
 	Transform,
 	Velocity,
 } from './ecs/components'
-import { Sprite, Texture, Loader } from 'pixi.js'
+import { Sprite, Texture, Loader, Graphics } from 'pixi.js'
 import { PixiApp, SCREEN_HEIGHT, SCREEN_WIDTH } from './pixi/pixi_app'
 import { DisplayObjects } from './pixi/object_manager'
 import { createLevel } from './level'
@@ -29,6 +29,7 @@ export const player = addEntity(game.world)
 export let playerSprite: Sprite
 export let playerRight: Texture
 export let playerLeft: Texture
+export let cursorGraphic: Graphics
 
 async function startGame() {
 	playerRight = Texture.from('player-right')
@@ -49,6 +50,11 @@ async function startGame() {
 	AreaConstraint.bottom[player] = SCREEN_HEIGHT - 12
 	AreaConstraint.right[player] = SCREEN_WIDTH - 24
 	addComponent(game.world, DisplayObject, player)
+
+	cursorGraphic = new Graphics()
+	cursorGraphic.beginFill(0xff94b2, 0.5)
+	cursorGraphic.drawCircle(0, 0, 8)
+	spriteContainer.addChild(cursorGraphic)
 
 	playerSprite = new Sprite(playerRight)
 	playerSprite.anchor.set(0.5, 0.85)

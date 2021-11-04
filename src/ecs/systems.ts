@@ -24,7 +24,13 @@ import { Vector2 } from '../util'
 import { circIn, circOut, cubicOut } from '@gamestdio/easing'
 import InputManager from '../input'
 import { PixiApp } from '../pixi/pixi_app'
-import { player, playerLeft, playerRight, playerSprite } from '../'
+import {
+	cursorGraphic,
+	player,
+	playerLeft,
+	playerRight,
+	playerSprite,
+} from '../'
 import {
 	getNextSegment,
 	getSegmentEnd,
@@ -75,6 +81,7 @@ export const playerSystem: System = (world) => {
 		mouse.local.x - Transform.x[player],
 		mouse.local.y - Transform.y[player]
 	)
+	cursorGraphic.visible = false
 	setComponentXY(Player.pointerDelta, player, deltaPoint)
 	Player.pointerDelta.magnitude[player] = deltaPoint.magnitude()
 	if (!mouse.leftButton || hasComponent(world, Jump, player)) {
@@ -90,6 +97,14 @@ export const playerSystem: System = (world) => {
 	} else if (!hasComponent(world, Painting, player)) {
 		addComponent(world, Force, player)
 		deltaPoint.multiplyScalar(1 / deltaMagnitude, deltaPoint) // Normalize
+		const cursorPoint = new Point()
+		deltaPoint.multiplyScalar(Math.min(40, deltaMagnitude), cursorPoint)
+		cursorGraphic.setTransform(
+			Transform.x[player] + cursorPoint.x,
+			Transform.y[player] + cursorPoint.y
+		)
+		cursorGraphic.alpha = Math.min(1, (deltaMagnitude - 16) / 28)
+		cursorGraphic.visible = true
 		const deltaFactor = Math.min(1, (deltaMagnitude - 12) / 32)
 		const force = deltaPoint.multiplyScalar(ACCELERATION * deltaFactor)
 		setComponentXY(Force, player, force)
