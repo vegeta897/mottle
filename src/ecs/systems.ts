@@ -280,10 +280,11 @@ export const shapeSystem: System = (world) => {
 				Level.segment = nextSegment
 				setComponentXY(Transform, player, getSegmentStart())
 				Painting.speed[player] *= 0.5
+				Painting.drift[player] = 0
 			} else {
 				// Shape complete
 				Level.shape.complete = true
-				paintLine(componentToVector2(Transform, player), false, 20)
+				paintLine(componentToVector2(Transform, player), false, 20, true)
 				Painting.ticks[player] = 0
 				removeComponent(world, Painting, player)
 				Level.shape = null

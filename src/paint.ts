@@ -14,15 +14,17 @@ let lastPoint: Vector2 | null = null
 export function paintLine(
 	{ x, y }: Vector2,
 	newLine: boolean,
-	thickness: number
+	thickness: number,
+	complete = false
 ) {
 	if (newLine || !currentLine) {
 		if (newLine || !currentLine) lastPoint = { x, y }
 		currentLine = new Graphics()
 		paintContainer.addChild(currentLine)
 	} else if (
+		complete ||
 		Vector2.getMagnitude({ x: x - lastPoint!.x, y: y - lastPoint!.y }) >
-		LINE_POINT_DIST
+			LINE_POINT_DIST
 	) {
 		currentLine.moveTo(lastPoint!.x, lastPoint!.y)
 		currentLine.lineStyle({
@@ -33,5 +35,6 @@ export function paintLine(
 		})
 		currentLine.lineTo(x, y)
 		lastPoint = { x, y }
+		if (complete) currentLine.cacheAsBitmap = true
 	}
 }

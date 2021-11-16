@@ -51,6 +51,7 @@ type Shape = {
 	contiguous: boolean
 	rotation: number
 	boundingBox: Rectangle
+	graphics: Graphics
 }
 
 const shapes: Set<Shape> = new Set()
@@ -59,6 +60,13 @@ const shapes: Set<Shape> = new Set()
 export const Level: { shape: null | Shape; segment: null | Segment } = {
 	shape: null,
 	segment: null,
+}
+
+const shapeLineStyle = {
+	width: 5,
+	color: GUIDE_COLOR,
+	cap: PIXI.LINE_CAP.ROUND,
+	join: PIXI.LINE_JOIN.ROUND,
 }
 
 function addShape(data: ShapeCreationData) {
@@ -71,25 +79,23 @@ function addShape(data: ShapeCreationData) {
 		rotation: data.rotation,
 		contiguous: data.contiguous,
 		start: data.origin,
+		graphics: new Graphics(),
 	}
 	shapes.add(shape)
-	const pointsGraphic = new Graphics()
-	pointsGraphic.beginFill(GUIDE_COLOR)
-	pointsGraphic.drawCircle(shape.start.x, shape.start.y, 4)
-	const linesGraphic = new Graphics()
-	const dashedLines = new DashLine(linesGraphic, {
+	shape.graphics.beginFill(GUIDE_COLOR)
+	shape.graphics.drawCircle(shape.start.x, shape.start.y, 4)
+	const dashedLines = new DashLine(shape.graphics, {
 		dash: [10.08, 14.08], // Decimals for irregular rasterization
-		width: 5,
-		color: GUIDE_COLOR,
-		cap: PIXI.LINE_CAP.ROUND,
-		join: PIXI.LINE_JOIN.ROUND,
+		...shapeLineStyle,
 	})
 	dashedLines.moveTo(shape.start.x, shape.start.y)
 	let previousSegment: Segment | null = null
 	const segmentDataList = data.getSegmentData()
 	for (const segmentData of segmentDataList) {
+		shape.graphics.lineStyle(shapeLineStyle)
 		dashedLines.lineTo(segmentData.end.x, segmentData.end.y)
-		pointsGraphic.drawCircle(segmentData.end.x, segmentData.end.y, 4)
+		shape.graphics.lineStyle()
+		shape.graphics.drawCircle(segmentData.end.x, segmentData.end.y, 4)
 		const parallelPoint = new Point(
 			segmentData.end.x - segmentData.start.x,
 			segmentData.end.y - segmentData.start.y
@@ -143,8 +149,9 @@ function addShape(data: ShapeCreationData) {
 		shape.segments[0].previous = previousSegment!
 		previousSegment!.next = shape.segments[0]
 	}
-	shapeContainer.addChild(pointsGraphic)
-	shapeContainer.addChild(linesGraphic)
+	shape.graphics.cacheAsBitmap = true
+	shape.graphics.alpha = 0.5
+	shapeContainer.addChild(shape.graphics)
 }
 
 const PERFORATION_GAP = 256
@@ -230,6 +237,7 @@ export function getShapeAt(
 			if (direction !== SEGMENT_DIR.NONE) {
 				shape.reverse = direction === SEGMENT_DIR.END_TO_START
 				shape.start = start
+				shape.graphics.alpha = 1
 				Level.shape = shape
 				Level.segment = segment
 				return true
@@ -256,6 +264,7 @@ export function updateLevel() {
 		if (spriteContainer.toGlobal({ x: shape.boundingBox.right, y: 0 }).x < 0) {
 			//TODO: shape.destroy()
 			shapes.delete(shape)
+			shape.graphics.destroy()
 		}
 	}
 }
